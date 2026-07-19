@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openedge-agent"
+version = "0.1.0"
+description = "Stage 1: retrieval foundation + eval set over a synthetic Progress 4GL / OpenEdge corpus"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["openedge_agent*"]

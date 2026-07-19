@@ -1,0 +1,21 @@
+# secrets / env
+.env
+.env.*
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# generated index / cache artifacts (rebuilt by ingest)
+index/
+*.faiss
+.embedding_cache/
+
+# editor noise
+.vscode/
+.idea/
+*.swp

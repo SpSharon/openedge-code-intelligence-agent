@@ -1,0 +1,504 @@
+{
+ "run_at": "2026-07-19T04:06:09+00:00",
+ "mode": "embed",
+ "embed_backend": "lsa-numpy (k=34, vocab=953)",
+ "params": {
+  "rrf_k": 30,
+  "w_bm25": 1.5,
+  "w_embed": 1.0,
+  "name_bonus": 0.005,
+  "bm25_k1": 1.2,
+  "bm25_b": 0.3,
+  "graph_weight": 0.3,
+  "touch_bonus": 0.04
+ },
+ "n_cases": 20,
+ "n_gold_targets": 35,
+ "metrics": {
+  "micro_recall@1": 0.2286,
+  "micro_recall@5": 0.7714,
+  "micro_recall@10": 0.9429,
+  "strict_case_recall@5": 0.7,
+  "precision@5": 0.53,
+  "mrr": 0.6252
+ },
+ "by_category": {
+  "call-graph": {
+   "cases": 5,
+   "micro_recall@5": 0.5556
+  },
+  "flow": {
+   "cases": 4,
+   "micro_recall@5": 0.8571
+  },
+  "legacy-pattern": {
+   "cases": 4,
+   "micro_recall@5": 0.6667
+  },
+  "schema": {
+   "cases": 5,
+   "micro_recall@5": 0.8571
+  },
+  "table-touch": {
+   "cases": 2,
+   "micro_recall@5": 1.0
+  }
+ },
+ "cases": [
+  {
+   "id": "S1",
+   "category": "schema",
+   "question": "What fields does the OrderLine table have, and what is its primary index?",
+   "gold_ranks": {
+    "schema:OrderLine": 1
+   },
+   "first_gold_rank": 1,
+   "precision_at_5": 0.2,
+   "top10": [
+    "schema:OrderLine",
+    "schema:Item",
+    "schema:Order",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "schema:ArHist",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:Customer"
+   ]
+  },
+  {
+   "id": "S2",
+   "category": "schema",
+   "question": "Where is a customer's credit limit stored?",
+   "gold_ranks": {
+    "schema:Customer": 1
+   },
+   "first_gold_rank": 1,
+   "precision_at_5": 0.4,
+   "top10": [
+    "schema:Customer",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/include/oeshared.i",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-price.p#main",
+    "schema:Order",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#apply-discount"
+   ]
+  },
+  {
+   "id": "S3",
+   "category": "schema",
+   "question": "Which table records posted invoices, and which procedure creates records in it?",
+   "gold_ranks": {
+    "schema:ArHist": 2,
+    "corpus/ar/ar-invoice.p#main": 4
+   },
+   "first_gold_rank": 2,
+   "precision_at_5": 0.6,
+   "top10": [
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:ArHist",
+    "schema:Order",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "schema:OrderLine",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "schema:next-inv-num"
+   ]
+  },
+  {
+   "id": "S4",
+   "category": "schema",
+   "question": "How are new order numbers generated?",
+   "gold_ranks": {
+    "schema:next-ord-num": 4,
+    "corpus/oe/oe-entry.p#create-order-header": 6
+   },
+   "first_gold_rank": 4,
+   "precision_at_5": 0.4,
+   "top10": [
+    "schema:Order",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-entry.p#main",
+    "schema:next-ord-num",
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/service/OrderService.cls#CancelOrder"
+   ]
+  },
+  {
+   "id": "S5",
+   "category": "schema",
+   "question": "What are the possible order status values?",
+   "gold_ranks": {
+    "corpus/include/ordstat.i": 2
+   },
+   "first_gold_rank": 2,
+   "precision_at_5": 0.4,
+   "top10": [
+    "schema:Order",
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:OrderLine",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "schema:next-ord-num",
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-ship.p#ship-line"
+   ]
+  },
+  {
+   "id": "C1",
+   "category": "call-graph",
+   "question": "Which procedure calls allocate-item?",
+   "gold_ranks": {
+    "corpus/oe/oe-entry.p#add-order-line": 3
+   },
+   "first_gold_rank": 3,
+   "precision_at_5": 0.4,
+   "top10": [
+    "corpus/inv/inv-alloc.p#allocate-item",
+    "corpus/inv/inv-alloc.p#check-avail",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "schema:Item",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-price.p#get-list-price"
+   ]
+  },
+  {
+   "id": "C2",
+   "category": "call-graph",
+   "question": "Which other programs does order entry run?",
+   "gold_ranks": {
+    "corpus/oe/oe-credit.p": null,
+    "corpus/oe/oe-price.p": null,
+    "corpus/inv/inv-alloc.p": 9
+   },
+   "first_gold_rank": 9,
+   "precision_at_5": 0.0,
+   "top10": [
+    "corpus/include/oeshared.i",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "schema:Order",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/rpt/rpt-backord.p#main",
+    "schema:next-ord-num",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-entry.p#create-order-header"
+   ]
+  },
+  {
+   "id": "C3",
+   "category": "call-graph",
+   "question": "Which procedures start the inventory allocation manager as a persistent procedure?",
+   "gold_ranks": {
+    "corpus/oe/oe-entry.p#add-order-line": 2,
+    "corpus/oe/oe-cancel.p#main": 4
+   },
+   "first_gold_rank": 2,
+   "precision_at_5": 0.8,
+   "top10": [
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-entry.p#create-order-header"
+   ]
+  },
+  {
+   "id": "C4",
+   "category": "call-graph",
+   "question": "What calls ar-invoice.p?",
+   "gold_ranks": {
+    "corpus/oe/oe-post.p#main": 6
+   },
+   "first_gold_rank": 6,
+   "precision_at_5": 0.4,
+   "top10": [
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/ar/ar-invoice.p#calc-order-total",
+    "schema:next-inv-num",
+    "schema:Customer",
+    "schema:ArHist",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/oe/oe-credit.p#check-credit"
+   ]
+  },
+  {
+   "id": "C5",
+   "category": "call-graph",
+   "question": "Which OrderService methods delegate to legacy .p procedures, and which procedures do they run?",
+   "gold_ranks": {
+    "corpus/service/OrderService.cls#CreateOrder": 2,
+    "corpus/service/OrderService.cls#CancelOrder": 1
+   },
+   "first_gold_rank": 1,
+   "precision_at_5": 0.4,
+   "top10": [
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/service/OrderService.cls#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/service/OrderService.cls#GetOrderTotal",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/oe/oe-entry.p#add-order-line"
+   ]
+  },
+  {
+   "id": "F1",
+   "category": "flow",
+   "question": "What happens when an order is posted?",
+   "gold_ranks": {
+    "corpus/oe/oe-post.p": 3,
+    "corpus/ar/ar-invoice.p": 2
+   },
+   "first_gold_rank": 2,
+   "precision_at_5": 0.8,
+   "top10": [
+    "schema:Order",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-post.p#main",
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:ArHist",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:OrderLine"
+   ]
+  },
+  {
+   "id": "F2",
+   "category": "flow",
+   "question": "Walk through order creation, from entry to inventory allocation.",
+   "gold_ranks": {
+    "corpus/oe/oe-entry.p": 2,
+    "corpus/inv/inv-alloc.p": 4
+   },
+   "first_gold_rank": 2,
+   "precision_at_5": 0.6,
+   "top10": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/inv/inv-alloc.p#main",
+    "schema:Order",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "schema:Item",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/service/OrderService.cls#CreateOrder"
+   ]
+  },
+  {
+   "id": "F3",
+   "category": "flow",
+   "question": "When does a customer's balance get updated?",
+   "gold_ranks": {
+    "corpus/ar/ar-invoice.p#main": 1
+   },
+   "first_gold_rank": 1,
+   "precision_at_5": 0.6,
+   "top10": [
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Customer",
+    "schema:ArHist",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "schema:next-inv-num",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/ar/ar-invoice.p#calc-order-total",
+    "corpus/oe/oe-credit.p#main",
+    "schema:Order"
+   ]
+  },
+  {
+   "id": "F4",
+   "category": "flow",
+   "question": "What happens when an order is cancelled?",
+   "gold_ranks": {
+    "corpus/oe/oe-cancel.p": 2,
+    "corpus/inv/inv-alloc.p#deallocate-item": 7
+   },
+   "first_gold_rank": 2,
+   "precision_at_5": 0.8,
+   "top10": [
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:Order",
+    "schema:OrderLine",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-entry.p#create-order-header"
+   ]
+  },
+  {
+   "id": "G1",
+   "category": "legacy-pattern",
+   "question": "Where are the shared order-entry variables and the shared customer buffer defined?",
+   "gold_ranks": {
+    "corpus/include/oeshared.i": 1
+   },
+   "first_gold_rank": 1,
+   "precision_at_5": 0.6,
+   "top10": [
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:Customer",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "schema:next-ord-num"
+   ]
+  },
+  {
+   "id": "G2",
+   "category": "legacy-pattern",
+   "question": "Which procedures rely on the shared customer buffer sb-cust?",
+   "gold_ranks": {
+    "corpus/oe/oe-entry.p": 6,
+    "corpus/oe/oe-credit.p": 2,
+    "corpus/oe/oe-price.p": 3
+   },
+   "first_gold_rank": 2,
+   "precision_at_5": 0.8,
+   "top10": [
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-price.p#main",
+    "schema:Customer",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/ar/ar-invoice.p#main"
+   ]
+  },
+  {
+   "id": "G3",
+   "category": "legacy-pattern",
+   "question": "If a customer orders 60 units of something, do they get a better price?",
+   "gold_ranks": {
+    "corpus/oe/oe-price.p#apply-discount": 7
+   },
+   "first_gold_rank": 7,
+   "precision_at_5": 0.2,
+   "top10": [
+    "schema:Customer",
+    "corpus/oe/oe-price.p#main",
+    "schema:OrderLine",
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-price.p#get-list-price",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Item",
+    "corpus/oe/oe-entry.p#add-order-line"
+   ]
+  },
+  {
+   "id": "G4",
+   "category": "legacy-pattern",
+   "question": "Which report lists backordered order lines?",
+   "gold_ranks": {
+    "corpus/rpt/rpt-backord.p": 1
+   },
+   "first_gold_rank": 1,
+   "precision_at_5": 0.4,
+   "top10": [
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/include/ordstat.i",
+    "schema:OrderLine",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "schema:Order",
+    "corpus/oe/oe-entry.p#add-order-line"
+   ]
+  },
+  {
+   "id": "W1",
+   "category": "table-touch",
+   "question": "Which procedures update the Item table?",
+   "gold_ranks": {
+    "corpus/inv/inv-alloc.p": 1,
+    "corpus/oe/oe-ship.p": 2
+   },
+   "first_gold_rank": 1,
+   "precision_at_5": 0.8,
+   "top10": [
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/inv/inv-alloc.p#allocate-item",
+    "schema:Item",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/inv/inv-alloc.p#check-avail",
+    "schema:OrderLine",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-ship.p#main"
+   ]
+  },
+  {
+   "id": "W2",
+   "category": "table-touch",
+   "question": "Which procedures create or change Order header records?",
+   "gold_ranks": {
+    "corpus/oe/oe-entry.p": 1,
+    "corpus/oe/oe-ship.p": 2,
+    "corpus/oe/oe-post.p": 4,
+    "corpus/oe/oe-cancel.p": 3
+   },
+   "first_gold_rank": 1,
+   "precision_at_5": 1.0,
+   "top10": [
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-post.p#main",
+    "schema:Order",
+    "schema:next-ord-num",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-ship.p#ship-line"
+   ]
+  }
+ ]
+}

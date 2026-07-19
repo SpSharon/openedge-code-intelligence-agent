@@ -1,0 +1,16 @@
+# Stage 1 dependencies.
+# Policy: a version is pinned here only after it was installed and exercised
+# in the build environment ("verify against real runs").
+#
+# Verified in-environment (Python 3.11):
+numpy==2.4.4
+
+# NOTE: the Stage 1 build environment could not reach PyPI (HTTP 403), so
+# nothing beyond the preinstalled numpy could be added:
+#   - tests use stdlib unittest (no pytest)
+#   - the embedding backend is the built-in numpy LSA
+#
+# Optional upgrade on a machine with normal network access:
+#   pip install sentence-transformers
+# then re-run `python -m openedge_agent.ingest` and `...score`; outputs
+# record the backend switch (index/embed_meta.json, scoreboard JSONs).

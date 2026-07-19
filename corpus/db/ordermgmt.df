@@ -1,0 +1,596 @@
+ADD SEQUENCE "next-ord-num"
+  INITIAL 1000
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 1000
+
+ADD SEQUENCE "next-inv-num"
+  INITIAL 50000
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 50000
+
+ADD TABLE "Customer"
+  AREA "Schema Area"
+  DESCRIPTION "Customer master file"
+  DUMP-NAME "customer"
+
+ADD FIELD "CustNum" OF "Customer" AS integer
+  DESCRIPTION "Customer number - assigned by AR dept"
+  FORMAT ">>>>9"
+  INITIAL "0"
+  LABEL "Cust Num"
+  POSITION 2
+  MAX-WIDTH 4
+  COLUMN-LABEL "Cust#"
+  HELP "Please enter a customer number."
+  ORDER 10
+  MANDATORY
+
+ADD FIELD "Name" OF "Customer" AS character
+  FORMAT "x(30)"
+  INITIAL ""
+  LABEL "Name"
+  POSITION 3
+  MAX-WIDTH 60
+  ORDER 20
+
+ADD FIELD "Address" OF "Customer" AS character
+  FORMAT "x(35)"
+  INITIAL ""
+  LABEL "Address"
+  POSITION 4
+  MAX-WIDTH 70
+  ORDER 30
+
+ADD FIELD "City" OF "Customer" AS character
+  FORMAT "x(25)"
+  INITIAL ""
+  LABEL "City"
+  POSITION 5
+  MAX-WIDTH 50
+  ORDER 40
+
+ADD FIELD "State" OF "Customer" AS character
+  FORMAT "x(2)"
+  INITIAL ""
+  LABEL "State"
+  POSITION 6
+  MAX-WIDTH 4
+  ORDER 50
+
+ADD FIELD "PostalCode" OF "Customer" AS character
+  FORMAT "x(10)"
+  INITIAL ""
+  LABEL "Postal Code"
+  POSITION 7
+  MAX-WIDTH 20
+  ORDER 60
+
+ADD FIELD "Phone" OF "Customer" AS character
+  FORMAT "x(20)"
+  INITIAL ""
+  LABEL "Phone"
+  POSITION 8
+  MAX-WIDTH 40
+  ORDER 70
+
+ADD FIELD "SalesRep" OF "Customer" AS character
+  DESCRIPTION "Assigned sales rep code"
+  FORMAT "x(4)"
+  INITIAL ""
+  LABEL "Sales Rep"
+  POSITION 9
+  MAX-WIDTH 8
+  ORDER 80
+
+ADD FIELD "CreditLimit" OF "Customer" AS decimal
+  DESCRIPTION "Maximum credit exposure incl. open orders"
+  FORMAT "->,>>>,>>9.99"
+  INITIAL "1500"
+  LABEL "Credit Limit"
+  POSITION 10
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 90
+
+ADD FIELD "Balance" OF "Customer" AS decimal
+  DESCRIPTION "Current AR balance - maintained by ar-invoice.p and cash rcpts"
+  FORMAT "->,>>>,>>9.99"
+  INITIAL "0"
+  LABEL "Balance"
+  POSITION 11
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 100
+
+ADD FIELD "Terms" OF "Customer" AS character
+  FORMAT "x(20)"
+  INITIAL "Net30"
+  LABEL "Terms"
+  POSITION 12
+  MAX-WIDTH 40
+  ORDER 110
+
+ADD FIELD "Discount" OF "Customer" AS integer
+  DESCRIPTION "Standard customer discount pct"
+  FORMAT ">>9%"
+  INITIAL "0"
+  LABEL "Discount"
+  POSITION 13
+  MAX-WIDTH 4
+  ORDER 120
+
+ADD FIELD "Comments" OF "Customer" AS character
+  FORMAT "x(60)"
+  INITIAL ""
+  LABEL "Comments"
+  POSITION 14
+  MAX-WIDTH 120
+  ORDER 130
+
+ADD INDEX "CustNum" ON "Customer"
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "CustNum" ASCENDING
+
+ADD INDEX "Name" ON "Customer"
+  AREA "Schema Area"
+  INDEX-FIELD "Name" ASCENDING
+
+ADD INDEX "SalesRep" ON "Customer"
+  AREA "Schema Area"
+  INDEX-FIELD "SalesRep" ASCENDING
+
+ADD TABLE "Order"
+  AREA "Schema Area"
+  DESCRIPTION "Order header"
+  DUMP-NAME "order"
+
+ADD FIELD "OrderNum" OF "Order" AS integer
+  DESCRIPTION "Order number from sequence next-ord-num"
+  FORMAT ">>>>>9"
+  INITIAL "0"
+  LABEL "Order Num"
+  POSITION 2
+  MAX-WIDTH 4
+  COLUMN-LABEL "Order#"
+  ORDER 10
+  MANDATORY
+
+ADD FIELD "CustNum" OF "Order" AS integer
+  FORMAT ">>>>9"
+  INITIAL "0"
+  LABEL "Cust Num"
+  POSITION 3
+  MAX-WIDTH 4
+  COLUMN-LABEL "Cust#"
+  ORDER 20
+  MANDATORY
+
+ADD FIELD "OrderDate" OF "Order" AS date
+  FORMAT "99/99/9999"
+  INITIAL "TODAY"
+  LABEL "Ordered"
+  POSITION 4
+  MAX-WIDTH 4
+  ORDER 30
+
+ADD FIELD "ShipDate" OF "Order" AS date
+  FORMAT "99/99/9999"
+  INITIAL ?
+  LABEL "Shipped"
+  POSITION 5
+  MAX-WIDTH 4
+  ORDER 40
+
+ADD FIELD "PromiseDate" OF "Order" AS date
+  FORMAT "99/99/9999"
+  INITIAL ?
+  LABEL "Promised"
+  POSITION 6
+  MAX-WIDTH 4
+  ORDER 50
+
+ADD FIELD "Carrier" OF "Order" AS character
+  FORMAT "x(20)"
+  INITIAL ""
+  LABEL "Carrier"
+  POSITION 7
+  MAX-WIDTH 40
+  ORDER 60
+
+ADD FIELD "Instructions" OF "Order" AS character
+  FORMAT "x(40)"
+  INITIAL ""
+  LABEL "Instructions"
+  POSITION 8
+  MAX-WIDTH 80
+  ORDER 70
+
+ADD FIELD "PO" OF "Order" AS character
+  DESCRIPTION "Customer purchase order reference"
+  FORMAT "x(20)"
+  INITIAL ""
+  LABEL "PO"
+  POSITION 9
+  MAX-WIDTH 40
+  ORDER 80
+
+ADD FIELD "Terms" OF "Order" AS character
+  FORMAT "x(20)"
+  INITIAL "Net30"
+  LABEL "Terms"
+  POSITION 10
+  MAX-WIDTH 40
+  ORDER 90
+
+ADD FIELD "SalesRep" OF "Order" AS character
+  DESCRIPTION "Copied from Customer.SalesRep at entry"
+  FORMAT "x(4)"
+  INITIAL ""
+  LABEL "Sales Rep"
+  POSITION 11
+  MAX-WIDTH 8
+  ORDER 100
+
+ADD FIELD "OrderStatus" OF "Order" AS character
+  DESCRIPTION "Ordered / Shipped / Posted / Cancelled - see include/ordstat.i"
+  FORMAT "x(12)"
+  INITIAL "Ordered"
+  LABEL "Status"
+  POSITION 12
+  MAX-WIDTH 24
+  ORDER 110
+
+ADD INDEX "OrderNum" ON "Order"
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "OrderNum" ASCENDING
+
+ADD INDEX "CustOrder" ON "Order"
+  AREA "Schema Area"
+  INDEX-FIELD "CustNum" ASCENDING
+  INDEX-FIELD "OrderNum" ASCENDING
+
+ADD INDEX "OrderStatus" ON "Order"
+  AREA "Schema Area"
+  INDEX-FIELD "OrderStatus" ASCENDING
+
+ADD INDEX "SalesRep" ON "Order"
+  AREA "Schema Area"
+  INDEX-FIELD "SalesRep" ASCENDING
+
+ADD TABLE "OrderLine"
+  AREA "Schema Area"
+  DESCRIPTION "Order detail line"
+  DUMP-NAME "orderline"
+
+ADD FIELD "OrderNum" OF "OrderLine" AS integer
+  FORMAT ">>>>>9"
+  INITIAL "0"
+  LABEL "Order Num"
+  POSITION 2
+  MAX-WIDTH 4
+  COLUMN-LABEL "Order#"
+  ORDER 10
+  MANDATORY
+
+ADD FIELD "LineNum" OF "OrderLine" AS integer
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Line Num"
+  POSITION 3
+  MAX-WIDTH 4
+  COLUMN-LABEL "Line#"
+  ORDER 20
+  MANDATORY
+
+ADD FIELD "ItemNum" OF "OrderLine" AS integer
+  FORMAT ">>>>>9"
+  INITIAL "0"
+  LABEL "Item Num"
+  POSITION 4
+  MAX-WIDTH 4
+  COLUMN-LABEL "Item#"
+  ORDER 30
+  MANDATORY
+
+ADD FIELD "Qty" OF "OrderLine" AS integer
+  FORMAT "->>>>9"
+  INITIAL "0"
+  LABEL "Qty"
+  POSITION 5
+  MAX-WIDTH 4
+  ORDER 40
+
+ADD FIELD "Price" OF "OrderLine" AS decimal
+  DESCRIPTION "Unit price after pricing engine"
+  FORMAT "->>,>>9.99"
+  INITIAL "0"
+  LABEL "Price"
+  POSITION 6
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 50
+
+ADD FIELD "Discount" OF "OrderLine" AS integer
+  DESCRIPTION "Line discount pct from oe-price.p"
+  FORMAT ">>9%"
+  INITIAL "0"
+  LABEL "Discount"
+  POSITION 7
+  MAX-WIDTH 4
+  ORDER 60
+
+ADD FIELD "ExtendedPrice" OF "OrderLine" AS decimal
+  DESCRIPTION "Qty * Price less discount"
+  FORMAT "->>,>>>,>>9.99"
+  INITIAL "0"
+  LABEL "Extended Price"
+  POSITION 8
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 70
+
+ADD FIELD "OrderLineStatus" OF "OrderLine" AS character
+  DESCRIPTION "Ordered / Backordered / Shipped / Cancelled - see include/ordstat.i"
+  FORMAT "x(12)"
+  INITIAL "Ordered"
+  LABEL "Line Status"
+  POSITION 9
+  MAX-WIDTH 24
+  ORDER 80
+
+ADD INDEX "OrderLine" ON "OrderLine"
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "OrderNum" ASCENDING
+  INDEX-FIELD "LineNum" ASCENDING
+
+ADD INDEX "ItemNum" ON "OrderLine"
+  AREA "Schema Area"
+  INDEX-FIELD "ItemNum" ASCENDING
+
+ADD INDEX "OrderLineStatus" ON "OrderLine"
+  AREA "Schema Area"
+  INDEX-FIELD "OrderLineStatus" ASCENDING
+
+ADD TABLE "Item"
+  AREA "Schema Area"
+  DESCRIPTION "Item master / inventory"
+  DUMP-NAME "item"
+
+ADD FIELD "ItemNum" OF "Item" AS integer
+  FORMAT ">>>>>9"
+  INITIAL "0"
+  LABEL "Item Num"
+  POSITION 2
+  MAX-WIDTH 4
+  COLUMN-LABEL "Item#"
+  ORDER 10
+  MANDATORY
+
+ADD FIELD "ItemName" OF "Item" AS character
+  FORMAT "x(30)"
+  INITIAL ""
+  LABEL "Item Name"
+  POSITION 3
+  MAX-WIDTH 60
+  ORDER 20
+
+ADD FIELD "Price" OF "Item" AS decimal
+  DESCRIPTION "Current list price"
+  FORMAT "->>,>>9.99"
+  INITIAL "0"
+  LABEL "List Price"
+  POSITION 4
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 30
+
+ADD FIELD "OnHand" OF "Item" AS integer
+  DESCRIPTION "Qty physically on hand - decremented at ship"
+  FORMAT "->>>>9"
+  INITIAL "0"
+  LABEL "On Hand"
+  POSITION 5
+  MAX-WIDTH 4
+  ORDER 40
+
+ADD FIELD "Allocated" OF "Item" AS integer
+  DESCRIPTION "Qty allocated to open orders - see inv/inv-alloc.p"
+  FORMAT "->>>>9"
+  INITIAL "0"
+  LABEL "Allocated"
+  POSITION 6
+  MAX-WIDTH 4
+  ORDER 50
+
+ADD FIELD "OnOrder" OF "Item" AS integer
+  DESCRIPTION "Qty on open purchase orders"
+  FORMAT "->>>>9"
+  INITIAL "0"
+  LABEL "On Order"
+  POSITION 7
+  MAX-WIDTH 4
+  ORDER 60
+
+ADD FIELD "ReOrder" OF "Item" AS integer
+  DESCRIPTION "Reorder point"
+  FORMAT "->>>>9"
+  INITIAL "0"
+  LABEL "Re-Order"
+  POSITION 8
+  MAX-WIDTH 4
+  ORDER 70
+
+ADD FIELD "Weight" OF "Item" AS decimal
+  FORMAT "->>9.99"
+  INITIAL "0"
+  LABEL "Ship Weight"
+  POSITION 9
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 80
+
+ADD FIELD "CatPage" OF "Item" AS integer
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Cat Page"
+  POSITION 10
+  MAX-WIDTH 4
+  ORDER 90
+
+ADD FIELD "CatDescription" OF "Item" AS character
+  FORMAT "x(60)"
+  INITIAL ""
+  LABEL "Description"
+  POSITION 11
+  MAX-WIDTH 120
+  ORDER 100
+
+ADD INDEX "ItemNum" ON "Item"
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "ItemNum" ASCENDING
+
+ADD INDEX "ItemName" ON "Item"
+  AREA "Schema Area"
+  INDEX-FIELD "ItemName" ASCENDING
+
+ADD TABLE "SalesRep"
+  AREA "Schema Area"
+  DESCRIPTION "Sales rep master"
+  DUMP-NAME "salesrep"
+
+ADD FIELD "SalesRep" OF "SalesRep" AS character
+  DESCRIPTION "Rep code"
+  FORMAT "x(4)"
+  INITIAL ""
+  LABEL "Sales Rep"
+  POSITION 2
+  MAX-WIDTH 8
+  ORDER 10
+  MANDATORY
+
+ADD FIELD "RepName" OF "SalesRep" AS character
+  FORMAT "x(30)"
+  INITIAL ""
+  LABEL "Rep Name"
+  POSITION 3
+  MAX-WIDTH 60
+  ORDER 20
+
+ADD FIELD "Region" OF "SalesRep" AS character
+  FORMAT "x(15)"
+  INITIAL ""
+  LABEL "Region"
+  POSITION 4
+  MAX-WIDTH 30
+  ORDER 30
+
+ADD FIELD "MonthQuota" OF "SalesRep" AS decimal
+  DESCRIPTION "Monthly sales quota, Jan-Dec"
+  FORMAT "->,>>>,>>9.99"
+  INITIAL "0"
+  LABEL "Month Quota"
+  POSITION 5
+  MAX-WIDTH 180
+  DECIMALS 2
+  EXTENT 12
+  ORDER 40
+
+ADD INDEX "SalesRep" ON "SalesRep"
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "SalesRep" ASCENDING
+
+ADD TABLE "ArHist"
+  AREA "Schema Area"
+  DESCRIPTION "AR invoice history - one record per posted invoice"
+  DUMP-NAME "arhist"
+
+ADD FIELD "InvoiceNum" OF "ArHist" AS integer
+  DESCRIPTION "Invoice number from sequence next-inv-num"
+  FORMAT ">>>>>>9"
+  INITIAL "0"
+  LABEL "Invoice Num"
+  POSITION 2
+  MAX-WIDTH 4
+  COLUMN-LABEL "Inv#"
+  ORDER 10
+  MANDATORY
+
+ADD FIELD "CustNum" OF "ArHist" AS integer
+  FORMAT ">>>>9"
+  INITIAL "0"
+  LABEL "Cust Num"
+  POSITION 3
+  MAX-WIDTH 4
+  ORDER 20
+  MANDATORY
+
+ADD FIELD "OrderNum" OF "ArHist" AS integer
+  FORMAT ">>>>>9"
+  INITIAL "0"
+  LABEL "Order Num"
+  POSITION 4
+  MAX-WIDTH 4
+  ORDER 30
+
+ADD FIELD "InvoiceDate" OF "ArHist" AS date
+  FORMAT "99/99/9999"
+  INITIAL "TODAY"
+  LABEL "Invoice Date"
+  POSITION 5
+  MAX-WIDTH 4
+  ORDER 40
+
+ADD FIELD "Amount" OF "ArHist" AS decimal
+  DESCRIPTION "Invoice total"
+  FORMAT "->>,>>>,>>9.99"
+  INITIAL "0"
+  LABEL "Amount"
+  POSITION 6
+  MAX-WIDTH 17
+  DECIMALS 2
+  ORDER 50
+
+ADD FIELD "SalesRep" OF "ArHist" AS character
+  DESCRIPTION "Copied from Order.SalesRep at posting"
+  FORMAT "x(4)"
+  INITIAL ""
+  LABEL "Sales Rep"
+  POSITION 7
+  MAX-WIDTH 8
+  ORDER 60
+
+ADD INDEX "InvoiceNum" ON "ArHist"
+  AREA "Schema Area"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "InvoiceNum" ASCENDING
+
+ADD INDEX "CustNum" ON "ArHist"
+  AREA "Schema Area"
+  INDEX-FIELD "CustNum" ASCENDING
+
+ADD INDEX "InvoiceDate" ON "ArHist"
+  AREA "Schema Area"
+  INDEX-FIELD "InvoiceDate" ASCENDING
+
+ADD INDEX "SalesRep" ON "ArHist"
+  AREA "Schema Area"
+  INDEX-FIELD "SalesRep" ASCENDING
+
+.
+PSC
+cpstream=ISO8859-1
+.
+0000011325
