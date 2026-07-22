@@ -74,8 +74,69 @@
   claimed behavior real. This is precisely the class of cross-procedure
   reasoning the Stage 2 agent exists to do.
 
+- **A regex rubric needs the same adversarial audit as an answer key.**
+  (Stage 2) The `must_mention` facts for all 20 dev cases were written from
+  the corpus, then a fresh-context auditor re-derived every fact — all 20
+  cases were factually correct, but 6 had pattern problems the author
+  couldn't see: too strict (a correct "stored in Customer.CreditLimit"
+  missed S2's patterns; "released back to inventory" missed F4's
+  `deallocate`-only pattern) and too loose (bare `status` matched a wrong
+  answer, `\+` matched any quoted code). Test rubric patterns against
+  phrasings a correct answer and a wrong answer would actually use.
+
+- **Design the judge out of the primary metric.** (Stage 2) Answer
+  correctness is any-of regex coverage of `must_mention` facts — no LLM
+  grader anywhere in the headline number, so the ChurchReach leaky-judge
+  failure mode has nothing to leak through. Per-fact misses are stored in
+  the scoreboard so a human can tell a real miss from a phrasing gap.
+
+- **Surface hallucinated citations; don't silently clean them.** (Stage 2)
+  The citation parser strips ids that weren't in the retrieved context from
+  `citations` but records them in `invalid_citations`, and the scoreboard
+  totals them. A grounding failure becomes a visible number instead of a
+  quietly repaired output.
+
+- **The held-out set reveals the retrieval ceiling the dev set hid.**
+  (Stage 2) On the frozen 20 dev cases every gold target sits in the top-10
+  context (gold-in-context 1.000), so any answer/citation miss there is the
+  agent's. On the 9 fresh held-out cases it drops to 0.846 — two gold units
+  (`rpt-repsales.p#main`) never reach the top-10. The dev set, tuned against,
+  flattered retrieval; the held-out set is where the single-shot agent's hard
+  ceiling (you can't cite what wasn't retrieved) actually shows up. Report the
+  held-out ceiling next to the answer number so a low score reads as
+  retrieval-bounded, not agent-failure.
+
+- **Say which verifications actually ran.** (Stage 2) The dev rubric got a
+  full independent fresh-context audit; the held-out rubric's independent
+  audit was cut off by a credit/API error mid-run, so it was re-verified
+  in-context by the main session instead, with the machine structural checks
+  (targets resolve, no question-echo, refusal present) still passing. That
+  distinction is written into HANDOFF rather than smoothed over — "verified"
+  with an asterisk beats "verified" that isn't. (Later resolved: the
+  independent held-out audit was redone to completion by a fresh-context
+  sub-agent — 8/9 sound, one defect fixed, H2's bare-token matchers.)
+
+- **Citation gold measures "cited the answer files", not "cited the
+  evidence".** (Stage 2, C2) For "which programs does order entry run?" the
+  frozen gold targets are the three callees; the file containing the RUN
+  statements (oe-entry.p) is only `acceptable`. An agent citing exactly the
+  evidence scores 0 citation recall on that case. Kept as-is — the frozen
+  ruler doesn't bend mid-stage — but it's a known semantic wrinkle to
+  reconsider when the Stage 3 eval is authored.
+
 - **Plant traps the ruler can see.** The commented-out Item update in
   `oe-post.p` (W1), the persistent-handle call sites (C1), and the
   shared-buffer include (G2) were designed *into* the corpus at the same time
   as the eval cases that test them. Realistic difficulty you didn't measure is
   just noise; measured traps are signal.
+
+- **Fix a grader bug; don't game a grader pattern.** (Stage 2, post-run)
+  Hand-checking the real answers found two correct ones under-counted because
+  markdown broke the literal `must_mention` match (`**not** in the retrieved
+  code`; a backtick-wrapped `Customer` table). That is a scorer bug — normalize
+  markdown before matching, patterns unchanged, re-score the saved runs offline
+  (no new spend). But one answer (F2) that expressed a fact via the constant
+  `{&LIN-BACKORD}` instead of the word "backorder" was LEFT as a miss: fixing a
+  matcher bug is fair; loosening a content pattern after seeing the model's
+  output is tuning-to-output. The direction of the change is the tell — a
+  bug-fix can raise a score honestly, a post-hoc pattern-loosening cannot.

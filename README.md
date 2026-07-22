@@ -1,9 +1,14 @@
 # OpenEdge Code-Intelligence Agent
 
 An agent that understands a legacy Progress 4GL / OpenEdge (ABL) codebase and
-answers questions about it with citations. This repo is **Stage 1** of a staged
-build: the retrieval foundation and the evaluation set — no LLM answer agent
-yet. The measure exists before the thing it measures.
+answers plain-English questions about it with citations — and refuses to guess
+when the answer isn't in the retrieved code. Legacy 4GL is hard to navigate
+and poorly served by modern tooling, so an accurate, *grounded* code assistant
+is genuinely useful. This repo contains **Stage 1** (the measured retrieval
+foundation + evaluation set) and **Stage 2** (the citation-bearing answer
+agent over it, with its own answer/citation scoreboard). The measure exists
+before the thing it measures — in both stages the eval set was written and
+independently verified before the code it scores.
 
 ## How this is built (read this first)
 
@@ -78,6 +83,102 @@ live in `evals/README.md` and `evals/results/*.json`.
   this size say "the machinery works and is measured," not "this generalizes
   to 2M lines of ABL."
 
+## Stage 2 — the citation-bearing agent
+
+`openedge_agent/agent.py` is the simplest thing that answers with receipts:
+retrieve top-10 with the frozen Stage 1 retriever, build a context block of
+the retrieved units' text + x-refs each labelled with its unit id, make ONE
+LLM call, and parse the citations back out. No agent loop, no tools, no UI —
+that is Stage 3.
+
+The grounding contract, enforced by the prompt and checked by the parser and
+the eval: answer only from the retrieved units; cite exactly the unit ids the
+answer draws on; if it isn't in the retrieved context, say "not in the
+retrieved code" rather than invent a procedure, table, or behavior. Citations
+naming units that were *not* retrieved are stripped from `citations` and
+surfaced in `invalid_citations` — hallucinated cites become a visible count,
+not a silently repaired output.
+
+Scoring (`evals/answer_score.py`, over `evals/answers.jsonl` — the same
+frozen 20 questions, gold citations identical to the retrieval gold,
+test-enforced):
+
+- **Citation recall / precision** — did the answer cite the gold targets, and
+  were its citations gold-or-acceptable rather than noise (same
+  `target_matches` semantics as Stage 1).
+- **Answer correctness** — per-case `must_mention` facts (any-of
+  case-insensitive regex per fact, macro-averaged). Deliberately judge-free:
+  no LLM grader touches the headline number; per-fact misses are saved in the
+  scoreboard for human review. The fact list was audited by a fresh-context
+  AI reviewer against the corpus before any agent run.
+
+The LLM client is pluggable (`openedge_agent/llm.py`): a real Anthropic
+backend (key from the environment only) and a scripted `FakeLLM`, so the
+whole pipeline — retrieval, grounding, parsing, scoring — builds and tests
+offline. A real run prints a cost estimate and asks before spending, and
+stamps the model + metered token usage into the saved scoreboard.
+
+The agent is scored on two sets: the frozen 20-case **dev** set
+(`evals/answers.jsonl`, the prompt was written against it) and a 9-case
+**held-out** set (`evals/answers_heldout.jsonl`, authored fresh from the
+corpus and never used to shape the agent — the number that generalizes). The
+held-out set includes one refusal case (cash-receipts posting, genuinely
+absent from the corpus) to check the grounding contract fires.
+
+### Stage 2 score
+
+Real metered run of 2026-07-19, `claude-sonnet-4-5` at temperature 0 (model,
+token usage and cost are stamped into
+`evals/results/answers_scoreboard_{dev,heldout}.json`):
+
+| set | answer correctness | citation recall | citation precision | retrieval ceiling |
+|---|---|---|---|---|
+| **dev (frozen 20)** | **0.99** (19/20 fully covered) | 0.886 | 0.926 | 1.000 |
+| **held-out (fresh 9)** | **0.889** (7/9 fully covered) | 0.846 | 0.867 | 0.846 |
+
+Answer correctness is judge-free `must_mention` coverage (macro); citation
+recall/precision use the Stage 1 `target_matches` semantics. Read every number
+against the retrieval **ceiling** — the share of gold that even reaches the
+top-10 context, the hard cap on a single-shot agent. Zero hallucinated
+citations across all 29 answers.
+
+Reading it honestly:
+
+- **Held-out 0.889 is the number that generalizes** (the prompt was written
+  against the dev set, never these 9). Its shortfall is retrieval, not
+  reasoning: the two imperfect cases are the gold units that never reach the
+  top-10 (the 0.846 ceiling), and the agent *refused to fabricate* — it said
+  the report code is "not in the retrieved code" instead of inventing a
+  diagnosis. The held-out refusal case (cash receipts, genuinely absent from
+  the corpus) is answered correctly, grounded in the one comment that
+  establishes the absence.
+- **Citation recall trails answer correctness by design.** On call-graph
+  questions the agent *names* the right callees but *cites* the caller where it
+  read the `RUN` statements (call-graph citation-recall 0.667 vs
+  answer-correctness 1.000) — an attribution limit a Stage 3 graph-walk closes,
+  not a wrong answer.
+- **A scorer bug was found and fixed in the honest direction.** Two correct
+  answers were first under-counted because they wrapped a key term in markdown
+  (`**not** in the retrieved code`; the `` `Customer` `` table), which broke the
+  literal matcher. The fix normalizes markdown before matching — **the rubric
+  patterns are unchanged** — and both saved runs were re-scored offline with no
+  new spend (see each scoreboard's `rescore_note`). By the same rule, one dev
+  answer (F2) that stated a fact via the constant `{&LIN-BACKORD}` rather than
+  the word "backorder" was **left as a miss** (dev 0.99, not 1.0): fixing a
+  matcher bug is fair; loosening a content pattern after seeing the model's
+  output is not.
+
+Reproduce (offline scoring is free; only generation needs a key):
+
+```
+python evals/answer_score.py --dry-run   # ceiling + cost, no LLM
+python evals/answer_score.py             # dev; confirms cost before spending
+python evals/answer_score.py --cases evals/answers_heldout.jsonl --label heldout
+```
+
+Per-case answers, citations, and `must_mention` misses are saved in the two
+scoreboard JSONs.
+
 ## What Stage 1 contains
 
 | Piece | Where |
@@ -88,6 +189,16 @@ live in `evals/README.md` and `evals/results/*.json`.
 | Hybrid retrieval: identifier-aware BM25 + local embeddings + RRF + structure features | `openedge_agent/retrieve.py` |
 | Scoreboard: recall@k / strict case recall / precision@5 / MRR, per-category, saved JSON | `openedge_agent/score.py` |
 | Tests: 40 stdlib-unittest cases (parsing, ingest integration, retrieval, metrics) | `tests/` |
+
+Stage 2 adds:
+
+| Piece | Where |
+|---|---|
+| The answer agent: grounded single-call RAG, citation parsing + validation | `openedge_agent/agent.py` |
+| Pluggable LLM client (Anthropic / FakeLLM) with metered usage | `openedge_agent/llm.py` |
+| Answer eval set: frozen 20 questions + audited `must_mention` rubric | `evals/answers.jsonl` |
+| Answer scoreboard: citation P/R + judge-free answer correctness | `evals/answer_score.py` |
+| 32 more tests (parsing, grounding, refusal, metric math, rubric guards, markdown-robust matching) | `tests/test_agent.py`, `tests/test_answer_score.py` |
 
 ## Running it
 
@@ -104,6 +215,17 @@ python -m unittest discover -s tests   # test suite
 
 `python -m openedge_agent.score` with no flags reproduces the headline hybrid
 row above (deterministic on the same machine/numpy).
+
+Stage 2 (offline parts need nothing extra; real answers need
+`pip install anthropic` + `ANTHROPIC_API_KEY` as an env var):
+
+```
+python evals/answer_score.py --dry-run          # offline: ceiling + cost estimate
+python evals/answer_score.py --fake             # offline: pipeline smoke (FakeLLM)
+python evals/answer_score.py                    # real run; confirms cost first
+python -m openedge_agent.agent "what calls ar-invoice.p?"          # one question
+python -m openedge_agent.agent --fake "what calls ar-invoice.p?"   # offline demo
+```
 
 Optional neural embeddings: `pip install sentence-transformers`, then re-run
 `ingest` and `score`; the backend recorded in the outputs will change from
@@ -125,8 +247,9 @@ HANDOFF.md           state + exact next step for Stage 2
 
 ## Roadmap
 
-Stage 1 (this repo): measured retrieval foundation — done. Stage 2: a
-Claude-powered agent over this retrieval that answers with citations
-(file + procedure), scored for answer and citation accuracy; `HANDOFF.md`
-has the exact first step. Stage 3 (optional): agentic tools — read-file,
-search, call-graph walk — plus tracing. See `docs/OPENEDGE_AGENT_PLAN.md`.
+Stage 1: measured retrieval foundation — done. Stage 2: the
+citation-bearing answer agent + answer/citation scoreboard — built,
+offline-verified; measured — dev answer-correctness 0.99, held-out 0.889 (a fresh, sub-agent-verified set).
+Stage 3 (optional): agentic tools — read-unit, search, call-graph walk —
+re-scored on the same evals to measure the delta; `HANDOFF.md` has the
+exact first step. See `docs/OPENEDGE_AGENT_PLAN.md`.

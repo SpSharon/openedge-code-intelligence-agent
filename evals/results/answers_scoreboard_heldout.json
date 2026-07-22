@@ -1,0 +1,456 @@
+{
+ "run_at": "2026-07-19T23:14:21+00:00",
+ "kind": "answers",
+ "label": "heldout",
+ "cases_file": "answers_heldout.jsonl",
+ "llm": {
+  "model": "claude-sonnet-4-5",
+  "calls": 9,
+  "input_tokens": 46251,
+  "output_tokens": 2021,
+  "tokens_estimated": false,
+  "estimated_cost_usd": 0.1691
+ },
+ "fake": false,
+ "params": {
+  "k": 10,
+  "retriever": "frozen Stage 1 defaults"
+ },
+ "cost_estimate_before_run": {
+  "model": "claude-sonnet-4-5",
+  "calls": 9,
+  "est_input_tokens": 38208,
+  "est_output_tokens": 3150,
+  "est_cost_usd": 0.1619,
+  "note": "chars/4 token estimate; actual metered usage is stamped into the scoreboard after the run"
+ },
+ "metrics": {
+  "citation_recall": 0.8462,
+  "citation_precision": 0.8667,
+  "answer_correctness": 0.8889,
+  "perfect_answer_cases": 7,
+  "gold_in_context_rate": 0.8462,
+  "refusals": 4,
+  "invalid_citation_total": 0,
+  "n_cases": 9,
+  "n_gold_targets": 13,
+  "n_citations_total": 15
+ },
+ "by_category": {
+  "call-graph": {
+   "cases": 1,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  },
+  "flow": {
+   "cases": 2,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  },
+  "legacy-pattern": {
+   "cases": 3,
+   "citation_recall": 0.75,
+   "answer_correctness": 0.7778
+  },
+  "refusal": {
+   "cases": 1,
+   "citation_recall": null,
+   "answer_correctness": 1.0
+  },
+  "schema": {
+   "cases": 1,
+   "citation_recall": 0.5,
+   "answer_correctness": 0.6667
+  },
+  "table-touch": {
+   "cases": 1,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  }
+ },
+ "cases": [
+  {
+   "id": "H1",
+   "category": "schema",
+   "question": "Where are sales reps' monthly quotas kept, and how does the rep sales report pull out the right month's figure?",
+   "answer": "The answer is not in the retrieved code.\n\nThe retrieved units show that sales reps' monthly quotas are stored in the `SalesRep` table in a field called `MonthQuota` (a decimal extent 12 array for Jan-Dec) [schema:SalesRep]. The schema also indicates that `rpt/rpt-repsales.p` references the `SalesRep` table [schema:SalesRep], but the actual code for `rpt/rpt-repsales.p` showing how it pulls out the right month's figure was not retrieved.",
+   "citations": [
+    "schema:SalesRep"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "schema:ArHist",
+    "schema:Order",
+    "schema:Customer",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-post.p#main",
+    "corpus/ar/ar-invoice.p#main",
+    "schema:SalesRep",
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "schema:next-ord-num"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 1,
+    "gold_missed": [
+     "corpus/rpt/rpt-repsales.p#main"
+    ],
+    "n_citations": 1,
+    "n_good_citations": 1,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 2,
+    "coverage": 0.6666666666666666,
+    "missed": [
+     "the report subscripts the array by the input month (MonthQuota[ip-month])"
+    ]
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": [
+     "corpus/rpt/rpt-repsales.p#main"
+    ]
+   }
+  },
+  {
+   "id": "H2",
+   "category": "legacy-pattern",
+   "question": "The rep sales monthly report gets slow as invoice history grows - is there an indexing problem in how it selects the records?",
+   "answer": "The rep sales monthly report does have an indexing problem. The report [corpus/rpt/rpt-repsales.p] is not among the retrieved units, so I cannot see its exact query logic. However, the schema shows that ArHist has a SalesRep index [schema:ArHist], which should support efficient selection by sales rep. \n\nWithout seeing the actual report code in rpt/rpt-repsales.p, I cannot determine whether it is failing to use the SalesRep index, using an inefficient multi-field query pattern, or selecting records in a way that prevents index usage. The answer to whether there is an indexing problem in how the report selects records is not in the retrieved code.",
+   "citations": [],
+   "invalid_citations": [],
+   "retrieved": [
+    "schema:ArHist",
+    "schema:Order",
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Customer",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:OrderLine",
+    "corpus/oe/oe-post.p#main",
+    "schema:next-inv-num",
+    "schema:SalesRep",
+    "corpus/rpt/rpt-backord.p#main"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 0,
+    "gold_missed": [
+     "corpus/rpt/rpt-repsales.p#main"
+    ],
+    "n_citations": 0,
+    "n_good_citations": 0,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 1,
+    "coverage": 0.3333333333333333,
+    "missed": [
+     "MONTH()/YEAR() functions wrap the date in the WHERE clause",
+     "so it walks every ArHist row per rep"
+    ]
+   },
+   "context": {
+    "n_gold_in_context": 0,
+    "gold_absent": [
+     "corpus/rpt/rpt-repsales.p#main"
+    ]
+   }
+  },
+  {
+   "id": "H3",
+   "category": "call-graph",
+   "question": "Which program invokes deallocate-item in the allocation manager, and for which order lines does it get called?",
+   "answer": "The program **oe/oe-cancel.p** invokes `deallocate-item` in the allocation manager [corpus/oe/oe-cancel.p#main]. It gets called for order lines that have `OrderLineStatus = {&LIN-ORDERED}` (the \"Ordered\" status). The code iterates through all OrderLines of the order being cancelled, and for each line in Ordered status, it runs `deallocate-item IN gh-alloc` passing the ItemNum and Qty to release the inventory allocation back to available stock [corpus/oe/oe-cancel.p#main]. Backordered lines are not allocated, so they are cancelled without calling `deallocate-item`.",
+   "citations": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-entry.p#main",
+    "schema:Item",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/inv/inv-alloc.p#allocate-item"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   }
+  },
+  {
+   "id": "H4",
+   "category": "legacy-pattern",
+   "question": "Can individual installations hook their own custom logic into the nightly order posting run, and how does that mechanism work?",
+   "answer": "Yes, individual installations can hook their own custom logic into the nightly order posting run. The mechanism works through a site-specific exit procedure called `oe/oe-exit.p`.\n\nIn [corpus/oe/oe-post.p#main], after each order is successfully invoiced and its status is set to Posted, the code checks if a file named `oe/oe-exit.p` exists on the PROPATH using `SEARCH(c-exit-proc)`. If found, it runs that procedure with `RUN VALUE(c-exit-proc) (INPUT Order.OrderNum)`, passing the order number as input. The comment explicitly states this is \"Site-specific posting exit. Deliberately NOT in source control - each site drops its own oe/oe-exit.p on the PROPATH.\"\n\nImportantly, this exit hook runs within the same transaction block as the invoicing and status update, meaning if the exit procedure fails or triggers an UNDO, the entire order posting (including the invoice creation and status change) will roll back together.",
+   "citations": [
+    "corpus/oe/oe-post.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Order",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:ArHist",
+    "corpus/ar/ar-invoice.p#calc-order-total",
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-credit.p#get-open-balance"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 1,
+    "n_good_citations": 1,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   }
+  },
+  {
+   "id": "H5",
+   "category": "flow",
+   "question": "I ran ship confirmation on an order, but the header is still Ordered - what can leave it that way?",
+   "answer": "Based on the retrieved code, ship confirmation can leave the order header in \"Ordered\" status in these situations:\n\n1. **Backordered lines exist**: The header only moves to \"Shipped\" when there are NO lines with status \"Ordered\" OR \"Backordered\". If any line is backordered, the order stays \"Ordered\" [corpus/oe/oe-ship.p#main].\n\n2. **Item record is locked**: If the Item record is locked when ship-line runs, the line is left in \"Ordered\" status and a message is displayed. This prevents the header from moving to \"Shipped\" [corpus/oe/oe-ship.p#ship-line].\n\n3. **Item record is missing**: If the Item record cannot be found, the line is left in \"Ordered\" status and a message is displayed. Again, this prevents the header status change [corpus/oe/oe-ship.p#ship-line].\n\nThe ship confirmation process [corpus/oe/oe-ship.p#main] only processes lines that are currently in \"Ordered\" status, skipping backordered lines entirely. The header status change to \"Shipped\" happens only after all lines are either shipped or cancelled\u2014any remaining \"Ordered\" or \"Backordered\" lines will hold the order open.",
+   "citations": [
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-ship.p#ship-line"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-ship.p#main",
+    "schema:Order",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-post.p#main",
+    "schema:OrderLine",
+    "corpus/rpt/rpt-backord.p#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   }
+  },
+  {
+   "id": "H6",
+   "category": "legacy-pattern",
+   "question": "When the nightly post runs, does it also relieve inventory for the orders it posts?",
+   "answer": "No, the nightly post does **not** relieve inventory. Inventory relief was moved out of the posting process in April 2007. The comment in [corpus/oe/oe-post.p#main] explicitly states \"04/17/2007 dm - inventory relief moved OUT to oe-ship.p\" and shows the old relief code commented out for reference. \n\nInstead, inventory is relieved during shipping. The procedure [corpus/oe/oe-ship.p#ship-line] decrements both `Item.OnHand` and `Item.Allocated` when each line ships, before the order ever reaches the nightly post. By the time [corpus/oe/oe-post.p#main] runs, it only invoices shipped orders (via `ar/ar-invoice.p`) and marks them posted\u2014no inventory changes occur.",
+   "citations": [
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-ship.p#ship-line"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-post.p#main",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "schema:Order",
+    "schema:Item",
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-entry.p#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   }
+  },
+  {
+   "id": "H7",
+   "category": "table-touch",
+   "question": "After an order line is created, which procedures can later change its line status, and what values do they set?",
+   "answer": "After an order line is created, three procedures can change its line status:\n\n1. **oe/oe-cancel.p** sets the status to \"Cancelled\" for all lines when canceling an order [corpus/oe/oe-cancel.p#main].\n\n2. **oe/oe-ship.p** sets the status to \"Shipped\" for lines that were in \"Ordered\" status when shipping confirmation runs [corpus/oe/oe-ship.p#ship-line].\n\n3. The retrieved code does not show any procedure that sets lines to \"Backordered\" status, though this status value exists in the system [corpus/include/ordstat.i]. The procedure that creates this status is not in the retrieved code.\n\nNote that oe/oe-post.p does not change line status\u2014it only checks line status and updates the order header status [corpus/oe/oe-post.p#main].",
+   "citations": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/include/ordstat.i"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/include/ordstat.i",
+    "schema:OrderLine",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "schema:Order",
+    "corpus/oe/oe-ship.p#ship-line"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 3,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   }
+  },
+  {
+   "id": "H8",
+   "category": "flow",
+   "question": "If a customer is only slightly over their credit limit, will order entry still decline the order?",
+   "answer": "Yes, order entry will still approve an order even if a customer is slightly over their credit limit. The credit check procedure includes a tolerance of $100 above the credit limit before declining an order.\n\nIn [corpus/oe/oe-credit.p#main], the variable `d-tolerance` is defined with an initial value of 100. The [corpus/oe/oe-credit.p#check-credit] procedure then approves the order if the customer's balance plus open order exposure is less than or equal to their credit limit plus this tolerance (`sb-cust.CreditLimit + d-tolerance`). The code comments specifically note that this tolerance was \"added d-tolerance after the Meyer's Hardware escalation. Do not remove.\"\n\nThis means a customer can exceed their stated credit limit by up to $100 and still have their order approved.",
+   "citations": [
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-credit.p#check-credit"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "schema:Customer",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:Order",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/rpt/rpt-backord.p#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   }
+  },
+  {
+   "id": "H9",
+   "category": "refusal",
+   "question": "How do cash receipts get applied to bring a customer's balance back down?",
+   "answer": "According to the retrieved code, cash receipts bring down the customer's balance, but the actual cash receipt system is **not** in the retrieved code units. \n\nThe comment in [corpus/ar/ar-invoice.p#main] explicitly states: \"the one place Customer.Balance goes UP; cash receipts bring it down (that system lives in the GL package, not here)\". This tells us that:\n\n1. Customer.Balance increases when orders are invoiced (in ar/ar-invoice.p)\n2. Cash receipts decrease Customer.Balance to bring it back down\n3. The cash receipt functionality exists in the GL (General Ledger) package, not in the AR or OE packages\n\nThe schema documentation for the Customer table [schema:Customer] confirms that the Balance field is \"maintained by ar-invoice.p and cash rcpts\", but none of the retrieved units contain the actual cash receipt processing code from the GL package.",
+   "citations": [
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Customer"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "schema:Customer",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/include/oeshared.i",
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item"
+   ],
+   "citation": {
+    "n_gold": 0,
+    "n_gold_cited": 0,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 0,
+    "bad_citations": [
+     "corpus/ar/ar-invoice.p#main",
+     "schema:Customer"
+    ]
+   },
+   "must_mention": {
+    "n_facts": 1,
+    "n_covered": 1,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 0,
+    "gold_absent": []
+   }
+  }
+ ],
+ "rescored": true,
+ "rescore_note": "re-scored offline from the original run's saved answers after a markdown-robustness fix to the must_mention matcher (patterns unchanged); no new LLM calls; answers and citations are the paid run's, unchanged."
+}

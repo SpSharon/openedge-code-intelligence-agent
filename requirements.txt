@@ -10,6 +10,12 @@ numpy==2.4.4
 #   - tests use stdlib unittest (no pytest)
 #   - the embedding backend is the built-in numpy LSA
 #
+# Stage 2: real answer generation (the only external API dependency).
+# Not pinned: could not be installed/exercised in the Stage 2 build
+# environment either (same PyPI 403) — install on a normal-network machine:
+#   pip install anthropic
+# Offline paths (tests, --dry-run, --fake) need only numpy.
+
 # Optional upgrade on a machine with normal network access:
 #   pip install sentence-transformers
 # then re-run `python -m openedge_agent.ingest` and `...score`; outputs
