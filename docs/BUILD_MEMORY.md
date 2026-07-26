@@ -130,6 +130,69 @@
   as the eval cases that test them. Realistic difficulty you didn't measure is
   just noise; measured traps are signal.
 
+- **When a spec's test table contradicts its contract section, the contract
+  wins — and you test both directions.** (Stage 3) The design's T7 row listed
+  "bare file path, wrong case, missing corpus/ prefix" under bad args
+  asserting `ok is False`, but §3's tool contract says exactly those forms
+  RESOLVE (bare file → `#main`; C2's one-call walk depends on it). Built to
+  §3; the test asserts the genuinely-bad variants fail and the resolvable
+  variants succeed, so the contradiction is pinned down instead of silently
+  picked through.
+
+- **Implement the arithmetic, not the adjective.** (Stage 3) The design says
+  a NUDGE is "charged as a step", but its own budget line — ≤ 9 LLM calls =
+  6 tool executions + 2 nudges + 1 forced final — only adds up if nudges do
+  NOT consume the tool budget. The arithmetic is the testable statement
+  (T3 asserts `max_steps + 1` calls, T6 asserts the nudge counts), so the
+  loop charges nudges as LLM calls with their own hard cap of 2, never as
+  tool steps. Deviation disclosed here rather than smoothed over.
+
+- **The frozen parser's id-form strictness carries into Stage 3 — on
+  purpose.** A model that reads `oe-credit.p#main` via read_unit but cites
+  the bare file form `corpus/oe/oe-credit.p` gets an invalid citation,
+  because `parse_response` (unchanged, per design §2c) resolves only
+  exact/case/prefix against the read-set ids — identical to Stage 2's
+  behavior against `retrieved`. Left unfixed: widening the allowed list with
+  file aliases would change the frozen funnel's semantics mid-design, and
+  the tool result echoes the resolved `#main` id (the citable form), which
+  models copy. If it ever bites, it lands in `invalid_citations` — visible,
+  not silent. (Independent verifier finding, 2026-07-25.)
+
+- **An offline rule-check can verify a rule's direction — it cannot
+  predict a citation outcome.** (Stage 3; corrected 2026-07-26) An earlier
+  version of this entry claimed the fresh-context verifier "confirmed rule
+  4c closes C2's 3 gold callees." The real metered run refuted that: C2's
+  gold callees were already in the seed context and the model still
+  declined to cite them. What the verifier actually established stands —
+  rule 4c steers no caller-gold case (C1/C3/C4/C5/H3) toward callee-only
+  citations, the C3/C5 unit-granularity risk is real, the §3 invariant
+  holds (all 24 walk-returned ids readable), and walk/ingest normalization
+  parity is exact (0 mismatches over 27 units × 3 directions). The sharper
+  lesson: those are checks of rules and invariants; "the model will cite
+  X" is a behavioral claim, and only the real run gets to make it.
+
+- **A refusal that forgets its CITATIONS line was one fallback away from
+  citing.** (Stage 3, adversarial review 2026-07-26) The forced-final path
+  fed replies straight to parse_response, whose inline-[id] fallback turns
+  a refusal's "the closest unit was [id]" mention into a citation — H9
+  stayed clean only by luck. Same review: _classify treated any line-start
+  TOOL: mention as a tool call, so a complete final answer quoting one was
+  discarded and re-dispatched, burning budget. Both fixed in agent3's loop
+  with red→green tests (a refusal with no CITATIONS: line parses as
+  CITATIONS: none; a TOOL: line only counts when it leads the reply or no
+  CITATIONS: line exists); parse_response itself stays frozen. The loop's
+  refusal gate now also normalizes markdown first, so it detects exactly
+  the refusals the frozen scorer counts.
+
+- **The transcript path is injection-safe by serialization; the seed path
+  only by corpus hygiene.** (Stage 3) Tool results enter the transcript
+  via json.dumps, so a read unit whose source text contains line-start
+  TOOL:/CITATIONS: lines cannot surface those tokens at line start in the
+  next prompt (pinned by test). The SEED context path is NOT sanitized —
+  the frozen build_context pastes unit text raw into the prompt — and is
+  safe only because the corpus is clean and synthetic; any future
+  non-synthetic corpus must revisit this before ingest.
+
 - **Fix a grader bug; don't game a grader pattern.** (Stage 2, post-run)
   Hand-checking the real answers found two correct ones under-counted because
   markdown broke the literal `must_mention` match (`**not** in the retrieved
@@ -140,3 +203,19 @@
   matcher bug is fair; loosening a content pattern after seeing the model's
   output is tuning-to-output. The direction of the change is the tell — a
   bug-fix can raise a score honestly, a post-hoc pattern-loosening cannot.
+
+- **Tools help where retrieval is short, not where it's saturated — and the
+  held-out gain is reliability, not search.** (Stage 3, metered 2026-07-26)
+  Same-day, model-held-constant, held-out run 3x: the single-shot agent is
+  unstable on held-out (correctness 0.74–0.85, 2–4 spurious refusals of 8
+  answerable cases per run, and it answers the one unanswerable case H9 *with*
+  citations); the tool agent is stable — 1.000 correctness/recall/precision every
+  run, refuses only H9 cleanly, 0 hallucinated cites. On dev, retrieval is
+  already at ceiling, so the tools add nothing: recall 0.829 vs 0.886, one caught
+  invalid, C2 unmoved (0.667). The out-of-retrieval recovery on H1/H2 is real but
+  modest and naming-dependent: the trace shows the agent **guessed
+  `rpt-repsales.p#main`'s id from the naming convention and read it directly — no
+  `search`** — so the generalizing tool was not exercised. Honest headline: the
+  tools convert an unreliable, over-refusing agent into a reliable one where
+  retrieval falls short, and are net-neutral-to-negative where it doesn't; C2
+  stays a citation-selection limit, reported unchanged, not tuned.

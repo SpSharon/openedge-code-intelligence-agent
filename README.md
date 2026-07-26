@@ -144,8 +144,12 @@ citations across all 29 answers.
 
 Reading it honestly:
 
-- **Held-out 0.889 is the number that generalizes** (the prompt was written
-  against the dev set, never these 9). Its shortfall is retrieval, not
+- **Held-out 0.889 was a single-run figure — a favorable sample, not a stable
+  estimate.** The prompt was written against the dev set, never these 9, so it
+  is the more generalizable *kind* of number; but a same-day 3x re-run (for the
+  Stage 3 comparison) later showed the single-shot held-out is **variable,
+  0.74–0.85** (see the "Stage 3 — the tool-using agent" section) — 0.889 was
+  the high end. Its shortfall is retrieval, not
   reasoning: the two imperfect cases are the gold units that never reach the
   top-10 (the 0.846 ceiling), and the agent *refused to fabricate* — it said
   the report code is "not in the retrieved code" instead of inventing a
@@ -155,8 +159,10 @@ Reading it honestly:
 - **Citation recall trails answer correctness by design.** On call-graph
   questions the agent *names* the right callees but *cites* the caller where it
   read the `RUN` statements (call-graph citation-recall 0.667 vs
-  answer-correctness 1.000) — an attribution limit a Stage 3 graph-walk closes,
-  not a wrong answer.
+  answer-correctness 1.000) — an attribution limit a Stage 3 graph-walk was built to close but, on the metered run, did **not** —
+  C2's gold was already in the retrieved context and the model declined to cite
+  it (see the "Stage 3 — the tool-using agent" section). It is an attribution
+  limit, not a wrong answer.
 - **A scorer bug was found and fixed in the honest direction.** Two correct
   answers were first under-counted because they wrapped a key term in markdown
   (`**not** in the retrieved code`; the `` `Customer` `` table), which broke the
@@ -178,6 +184,103 @@ python evals/answer_score.py --cases evals/answers_heldout.jsonl --label heldout
 
 Per-case answers, citations, and `must_mention` misses are saved in the two
 scoreboard JSONs.
+
+## Stage 3 — the tool-using agent
+
+`openedge_agent/agent3.py` gives the model three tools over the frozen Stage 1
+index — `read_unit(unit_id)`, `walk_calls(unit_id, direction)`, `search(query)`
+— and an agent loop with a bounded step budget (max 6 tool executions, 9 LLM
+calls). It emits the **same** answer/`CITATIONS` contract as Stage 2, so the
+frozen scorer runs it unchanged via `--agent tool`. The grounding guarantee is
+structural: `walk_calls` and `search` return no unit body and add nothing to the
+citable read-set, so a unit can be cited only after a `read_unit` step actually
+reads it — `citations ⊆ read_set` by construction, not by instruction
+(fuzz-verified: 1500 adversarial reply streams, 0 violations). The refusal
+contract and `parse_response` are Stage 2's, unchanged.
+
+### Stage 3 score — a same-day, model-held-constant comparison
+
+Both agents run on `claude-sonnet-4-5`, temperature 0, same day, against the
+frozen dev (20) and held-out (9) sets. Held-out was run **3x each** to show
+variance; every scoreboard stamps its `agent`, `max_steps`, per-case `trace`,
+and metered `usage`.
+
+Held-out (9 cases = 8 answerable + 1 genuinely-unanswerable refusal), 3 runs each:
+
+| held-out | single-shot (Stage 2) | tool agent (Stage 3) |
+|---|---|---|
+| answer correctness | 0.815 / 0.852 / 0.741 | **1.000 / 1.000 / 1.000** |
+| citation recall | 0.769 / 0.846 / 0.846 | **1.000 / 1.000 / 1.000** |
+| citation precision | 0.857 / 0.867 / 0.867 | **1.000 / 1.000 / 1.000** |
+| refusals | 4 / 4 / 2 — all on *answerable* cases | **1 / 1 / 1 — only the unanswerable one** |
+| invalid citations | 0 | 0 |
+
+Dev (20 cases; retrieval already at ceiling 1.000), 1 run each:
+
+| dev | single-shot | tool agent |
+|---|---|---|
+| answer correctness | 1.000 | 1.000 |
+| citation recall | 0.886 | 0.829 |
+| citation precision | 0.907 | 0.915 |
+| call-graph cite-recall (C2) | 0.667 | 0.667 |
+| invalid citations | 0 | 1 (caught, excluded from `citations`) |
+
+### Reading it honestly
+
+The result is **reliability where retrieval falls short**, and it is one-sided by design.
+
+- **Where retrieval is incomplete (held-out), the tools matter — a lot.** The
+  single-shot agent is *unstable* on held-out: correctness swings 0.74–0.85
+  across three runs, it spuriously refuses two-to-four of the eight answerable
+  questions each run, and it answers the one genuinely-unanswerable question (H9)
+  *with* citations instead of refusing. The tool agent is stable and correct —
+  1.000 correctness, recall, and precision on all three runs, refusing only H9,
+  cleanly, with zero hallucinated citations. Three runs each is what earns the
+  word "stable": the single-shot is chronically variable, the tool agent isn't.
+
+- **How it recovered the out-of-retrieval gold — honestly.** Held-out H1/H2's
+  gold (`rpt-repsales.p#main`) never enters the top-10 (the 0.846 retrieval
+  ceiling). The tool agent cited it anyway — but the trace shows it did so by
+  **inferring the unit id from the corpus naming convention and reading it
+  directly** (a single `read_unit corpus/rpt/rpt-repsales.p#main`, no `search`),
+  then citing what it read (grounded by the read-set invariant). That is a real,
+  useful capability the single-shot cannot do — but it leans on the corpus having
+  clean, predictable names. `search`, the tool that would recover missed units by
+  *content* on a messy real codebase, was available and **not exercised** on
+  these cases. So the honest claim is "the agent reads units retrieval never
+  surfaced," not "the agent searches to beat retrieval."
+
+- **Where retrieval is already complete (dev), the tools add nothing — and some
+  cost.** Every dev gold target is already in the top-10, so there is no gap to
+  close. On this run the tool agent's citation recall came in *below* the
+  single-shot's (0.829 vs 0.886), it produced one invalid-citation attempt (the
+  read-set filter caught it and kept it out of `citations`), and the call-graph
+  case the tools were originally aimed at — C2 — **did not move** (0.667). C2's
+  three gold callees were already in the seed context; the model named them and
+  declined to cite them. That is a citation-*selection* limit, not a
+  retrieval-depth one, and no tool addresses it.
+
+**In one sentence:** the tools pay off precisely where single-shot retrieval
+falls short — turning an unreliable, over-refusing agent into a stable, correct
+one on held-out questions whose evidence isn't in the top-10 — and add nothing
+where retrieval is already complete; the originally-targeted dev call-graph case
+(C2) is a citation-selection limit the tools do not touch.
+
+### Honesty notes on the Stage 3 score
+
+- **Small n, single model.** Held-out is 9 cases (8 answerable + 1 refusal), and
+  the recovery gain concentrates in the two `rpt-repsales.p#main` cases. Read the
+  held-out numbers as a *stability* finding on this set, not a benchmark.
+- **Controlled but temperature-0-noisy.** Same day, same model, model held
+  constant so the delta is the architecture, not a model swap — but temperature 0
+  does not make tool choice deterministic, hence three held-out runs. Dev was run
+  once (near-deterministic outside the few cases where a tool fires).
+- **The result was corrected by its own instrumentation.** An adversarial review
+  found the first Stage 3 run saved no traces and had misdiagnosed C2 as a
+  "non-walk," and found a refusal-integrity defect (a refusal could emit an
+  inline citation). All three were fixed — traces stamped, C2 re-read from the
+  data, the refusal path guarded (red-then-green tests) — before these numbers.
+  `docs/BUILD_MEMORY.md` carries the trail.
 
 ## What Stage 1 contains
 
@@ -250,6 +353,8 @@ HANDOFF.md           state + exact next step for Stage 2
 Stage 1: measured retrieval foundation — done. Stage 2: the
 citation-bearing answer agent + answer/citation scoreboard — built,
 offline-verified; measured — dev answer-correctness 0.99, held-out 0.889 (a fresh, sub-agent-verified set).
-Stage 3 (optional): agentic tools — read-unit, search, call-graph walk —
-re-scored on the same evals to measure the delta; `HANDOFF.md` has the
-exact first step. See `docs/OPENEDGE_AGENT_PLAN.md`.
+Stage 3: tool-using agent — read-unit, walk-calls, search — built and
+measured. It delivers reliability where single-shot retrieval is incomplete
+(held-out) and nothing where it is already complete (dev); the
+originally-targeted call-graph case (C2) is unmoved. See the "Stage 3 — the
+tool-using agent" section above and `HANDOFF.md`.

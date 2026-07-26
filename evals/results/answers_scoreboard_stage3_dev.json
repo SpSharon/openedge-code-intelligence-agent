@@ -1,0 +1,2083 @@
+{
+ "run_at": "2026-07-26T21:25:17+00:00",
+ "kind": "answers",
+ "label": "stage3_dev",
+ "cases_file": "answers.jsonl",
+ "llm": {
+  "model": "claude-sonnet-4-5",
+  "calls": 21,
+  "input_tokens": 111566,
+  "output_tokens": 5200,
+  "tokens_estimated": false,
+  "estimated_cost_usd": 0.4127
+ },
+ "fake": false,
+ "params": {
+  "k": 10,
+  "retriever": "frozen Stage 1 defaults",
+  "agent": "tool",
+  "max_steps": 6
+ },
+ "cost_estimate_before_run": {
+  "model": "claude-sonnet-4-5",
+  "calls": 20,
+  "est_input_tokens": 88391,
+  "est_output_tokens": 7000,
+  "est_cost_usd": 0.3702,
+  "note": "chars/4 token estimate; actual metered usage is stamped into the scoreboard after the run"
+ },
+ "metrics": {
+  "citation_recall": 0.8286,
+  "citation_precision": 0.9149,
+  "answer_correctness": 1.0,
+  "perfect_answer_cases": 20,
+  "gold_in_context_rate": 1.0,
+  "refusals": 0,
+  "invalid_citation_total": 1,
+  "n_cases": 20,
+  "n_gold_targets": 35,
+  "n_citations_total": 47
+ },
+ "by_category": {
+  "call-graph": {
+   "cases": 5,
+   "citation_recall": 0.6667,
+   "answer_correctness": 1.0
+  },
+  "flow": {
+   "cases": 4,
+   "citation_recall": 0.8571,
+   "answer_correctness": 1.0
+  },
+  "legacy-pattern": {
+   "cases": 4,
+   "citation_recall": 0.6667,
+   "answer_correctness": 1.0
+  },
+  "schema": {
+   "cases": 5,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  },
+  "table-touch": {
+   "cases": 2,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  }
+ },
+ "cases": [
+  {
+   "id": "S1",
+   "category": "schema",
+   "question": "What fields does the OrderLine table have, and what is its primary index?",
+   "answer": "The OrderLine table has 8 fields: OrderNum (integer), LineNum (integer), ItemNum (integer), Qty (integer), Price (decimal), Discount (integer), ExtendedPrice (decimal), and OrderLineStatus (character). Its primary index is OrderLine, which is unique and defined on OrderNum and LineNum.",
+   "citations": [
+    "schema:OrderLine"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "schema:OrderLine",
+    "schema:Item",
+    "schema:Order",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "schema:ArHist",
+    "schema:Customer",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/oe/oe-cancel.p#main"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 1,
+    "n_good_citations": 1,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 4,
+    "n_covered": 4,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    },
+    "schema:Item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 693
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    },
+    "schema:ArHist": {
+     "source": "seed",
+     "step": 0,
+     "chars": 551
+    },
+    "schema:Customer": {
+     "source": "seed",
+     "step": 0,
+     "chars": 734
+    },
+    "corpus/service/OrderService.cls#CreateOrder": {
+     "source": "seed",
+     "step": 0,
+     "chars": 367
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "S2",
+   "category": "schema",
+   "question": "Where is a customer's credit limit stored?",
+   "answer": "A customer's credit limit is stored in the `CreditLimit` field of the `Customer` table [schema:Customer]. This field is defined as a decimal and represents the \"Maximum credit exposure incl. open orders.\" The credit check procedure [corpus/oe/oe-credit.p#check-credit] compares the customer's balance plus open order exposure against this `CreditLimit` field (plus a tolerance) to approve or decline orders.",
+   "citations": [
+    "schema:Customer",
+    "corpus/oe/oe-credit.p#check-credit"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-credit.p#check-credit",
+    "schema:Customer",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/include/oeshared.i",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "schema:Order",
+    "corpus/oe/oe-post.p#main"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-credit.p#check-credit": {
+     "source": "seed",
+     "step": 0,
+     "chars": 554
+    },
+    "schema:Customer": {
+     "source": "seed",
+     "step": 0,
+     "chars": 734
+    },
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/oe/oe-credit.p#get-open-balance": {
+     "source": "seed",
+     "step": 0,
+     "chars": 698
+    },
+    "corpus/include/oeshared.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 619
+    },
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/oe/oe-price.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 978
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "S3",
+   "category": "schema",
+   "question": "Which table records posted invoices, and which procedure creates records in it?",
+   "answer": "The ArHist table records posted invoices, and the ar/ar-invoice.p#main procedure creates records in it. According to the schema, ArHist holds \"one record per posted invoice\" with fields including InvoiceNum, CustNum, OrderNum, InvoiceDate, Amount, and SalesRep. The ar/ar-invoice.p#main procedure executes a CREATE ArHist statement that assigns all these fields, including getting the invoice number from the next-inv-num sequence. This procedure runs inside the transaction of its caller (oe/oe-post.p#main), which invokes it for each shipped order during the nightly posting batch.",
+   "citations": [
+    "schema:ArHist",
+    "corpus/ar/ar-invoice.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "schema:ArHist",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:Order",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-entry.p#main",
+    "schema:OrderLine",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/service/OrderService.cls#CreateOrder"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "schema:ArHist": {
+     "source": "seed",
+     "step": 0,
+     "chars": 551
+    },
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    },
+    "corpus/service/OrderService.cls#CreateOrder": {
+     "source": "seed",
+     "step": 0,
+     "chars": 367
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "S4",
+   "category": "schema",
+   "question": "How are new order numbers generated?",
+   "answer": "New order numbers are generated from the database sequence `next-ord-num` (initial value 1000, increment 1). The procedure `create-order-header` in `oe/oe-entry.p` assigns the next sequence value to the shared variable `s-ordnum` using `ASSIGN s-ordnum = NEXT-VALUE(next-ord-num)`, then creates the Order record with that number. This happens inside the main transaction of `oe/oe-entry.p`, and as noted in the file header, if a credit check fails and the transaction undoes, the sequence value is consumed and not reused.",
+   "citations": [
+    "schema:next-ord-num",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-entry.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:next-ord-num",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:Order",
+    "corpus/oe/oe-ship.p#main",
+    "schema:ArHist",
+    "schema:OrderLine"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 2,
+    "bad_citations": [
+     "corpus/oe/oe-entry.p#main"
+    ]
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/inv/inv-alloc.p#deallocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 530
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/include/oeshared.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 619
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "schema:next-ord-num": {
+     "source": "seed",
+     "step": 0,
+     "chars": 270
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "schema:ArHist": {
+     "source": "seed",
+     "step": 0,
+     "chars": 551
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "S5",
+   "category": "schema",
+   "question": "What are the possible order status values?",
+   "answer": "Based on the retrieved code units, I can answer this question directly.\n\nThe possible order status values are defined in [corpus/include/ordstat.i] as:\n- \"Ordered\" (ORD-ORDERED)\n- \"Shipped\" (ORD-SHIPPED)\n- \"Posted\" (ORD-POSTED)\n- \"Cancelled\" (ORD-CANCELLED)\n\nThese values are stored in the Order.OrderStatus field as documented in [schema:Order], which states: \"OrderStatus (character) (Ordered / Shipped / Posted / Cancelled - see include/ordstat.i)\".",
+   "citations": [
+    "corpus/include/ordstat.i",
+    "schema:Order"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/rpt/rpt-backord.p#main",
+    "schema:Order",
+    "corpus/oe/oe-ship.p#main",
+    "schema:OrderLine",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:next-ord-num",
+    "corpus/oe/oe-ship.p#ship-line"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 5,
+    "n_covered": 5,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/include/ordstat.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 593
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/rpt/rpt-backord.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1567
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "schema:next-ord-num": {
+     "source": "seed",
+     "step": 0,
+     "chars": 270
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "C1",
+   "category": "call-graph",
+   "question": "Which procedure calls allocate-item?",
+   "answer": "Looking at the retrieved code units, I can see that `allocate-item` is called by the `add-order-line` procedure in `corpus/oe/oe-entry.p`.\n\nIn [corpus/oe/oe-entry.p#add-order-line], the code shows:\n\n```\nRUN allocate-item IN gh-alloc (INPUT  ip-itemnum,\n                               INPUT  ip-qty,\n                               OUTPUT l-alloc).\n```\n\nThis is the only call to `allocate-item` visible in the retrieved code units.",
+   "citations": [
+    "corpus/oe/oe-entry.p#add-order-line"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/inv/inv-alloc.p#allocate-item",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/inv/inv-alloc.p#check-avail",
+    "corpus/inv/inv-alloc.p#main",
+    "schema:Item",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/oe/oe-credit.p#check-credit"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 1,
+    "n_good_citations": 1,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/inv/inv-alloc.p#allocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1015
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "corpus/inv/inv-alloc.p#check-avail": {
+     "source": "seed",
+     "step": 0,
+     "chars": 468
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "schema:Item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 693
+    },
+    "corpus/inv/inv-alloc.p#deallocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 530
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/oe/oe-price.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 978
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    },
+    "corpus/oe/oe-credit.p#check-credit": {
+     "source": "seed",
+     "step": 0,
+     "chars": 554
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "C2",
+   "category": "call-graph",
+   "question": "Which other programs does order entry run?",
+   "answer": "I need to analyze the retrieved code to answer which programs order entry runs.\n\nLooking at [corpus/oe/oe-entry.p#main], I can see the main order entry program. It contains several RUN statements:\n\n1. `RUN create-order-header` - this is an internal procedure in the same file\n2. `RUN oe/oe-credit.p (OUTPUT l-approved)` - external program\n3. `RUN add-order-line (...)` - internal procedure in the same file\n\nThe internal procedure [corpus/oe/oe-entry.p#add-order-line] also runs:\n1. `RUN oe/oe-price.p (...)` - external program\n2. `RUN inv/inv-alloc.p PERSISTENT SET gh-alloc` - external program (persistent)\n3. `RUN allocate-item IN gh-alloc (...)` - procedure in the persistent handle\n\nSo the order entry program (oe/oe-entry.p) directly runs these external programs:\n- oe/oe-credit.p\n- oe/oe-price.p  \n- inv/inv-alloc.p\n\nAll of these units are already in my read set from the retrieved context, so I can provide a complete answer.\n\nThe order entry program (oe/oe-entry.p) runs three other programs: oe/oe-credit.p for credit checking, oe/oe-price.p for pricing each order line, and inv/inv-alloc.p as a persistent procedure for inventory allocation. The credit check runs once per order before any lines are added. Pricing and allocation run for each line being added.",
+   "citations": [
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#add-order-line"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/oe/oe-price.p#main"
+   ],
+   "citation": {
+    "n_gold": 3,
+    "n_gold_cited": 0,
+    "gold_missed": [
+     "corpus/oe/oe-credit.p",
+     "corpus/oe/oe-price.p",
+     "corpus/inv/inv-alloc.p"
+    ],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 3,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/include/oeshared.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 619
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/service/OrderService.cls#CreateOrder": {
+     "source": "seed",
+     "step": 0,
+     "chars": 367
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "corpus/rpt/rpt-backord.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1567
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/service/OrderService.cls#CancelOrder": {
+     "source": "seed",
+     "step": 0,
+     "chars": 126
+    },
+    "corpus/oe/oe-price.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 978
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "C3",
+   "category": "call-graph",
+   "question": "Which procedures start the inventory allocation manager as a persistent procedure?",
+   "answer": "I need to identify which procedures start the inventory allocation manager (inv/inv-alloc.p) as a persistent procedure.\n\nFrom the retrieved units, I can see that inv/inv-alloc.p is run PERSISTENT in two places:\n\n1. In [corpus/oe/oe-entry.p#add-order-line], there is:\n   ```\n   IF NOT VALID-HANDLE(gh-alloc) THEN\n       RUN inv/inv-alloc.p PERSISTENT SET gh-alloc.\n   ```\n\n2. In [corpus/oe/oe-cancel.p#main], there is:\n   ```\n   IF NOT VALID-HANDLE(gh-alloc) THEN\n       RUN inv/inv-alloc.p PERSISTENT SET gh-alloc.\n   ```\n\nBoth procedures check if the handle is valid and, if not, run inv/inv-alloc.p as a persistent procedure.\n\nThe procedures that start the inventory allocation manager as a persistent procedure are oe/oe-entry.p (specifically the add-order-line internal procedure) and oe/oe-cancel.p (in its main block). Both lazily instantiate the allocation manager by checking if gh-alloc is a valid handle before running inv/inv-alloc.p PERSISTENT.",
+   "citations": [
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-cancel.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-entry.p#create-order-header"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/oe/oe-price.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 978
+    },
+    "corpus/inv/inv-alloc.p#deallocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 530
+    },
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/oe/oe-price.p#apply-discount": {
+     "source": "seed",
+     "step": 0,
+     "chars": 381
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "C4",
+   "category": "call-graph",
+   "question": "What calls ar-invoice.p?",
+   "answer": "Based on the retrieved code units, I can see that **oe/oe-post.p** calls ar-invoice.p. The main block of oe/oe-post.p contains the statement `RUN ar/ar-invoice.p (INPUT Order.OrderNum, OUTPUT i-invnum)` within its order posting loop. This is the nightly batch process that invoices every shipped order.",
+   "citations": [
+    "corpus/oe/oe-post.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Customer",
+    "corpus/ar/ar-invoice.p#calc-order-total",
+    "schema:next-inv-num",
+    "corpus/oe/oe-post.p#main",
+    "schema:ArHist",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "schema:Order"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 1,
+    "n_good_citations": 1,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "schema:Customer": {
+     "source": "seed",
+     "step": 0,
+     "chars": 734
+    },
+    "corpus/ar/ar-invoice.p#calc-order-total": {
+     "source": "seed",
+     "step": 0,
+     "chars": 468
+    },
+    "schema:next-inv-num": {
+     "source": "seed",
+     "step": 0,
+     "chars": 259
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "schema:ArHist": {
+     "source": "seed",
+     "step": 0,
+     "chars": 551
+    },
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/oe/oe-credit.p#check-credit": {
+     "source": "seed",
+     "step": 0,
+     "chars": 554
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "C5",
+   "category": "call-graph",
+   "question": "Which OrderService methods delegate to legacy .p procedures, and which procedures do they run?",
+   "answer": "Looking at the retrieved code units, I can see the OrderService class and the legacy procedures it calls.\n\nFrom the retrieved units:\n\n**OrderService.CreateOrder** [corpus/service/OrderService.cls#CreateOrder] delegates to **oe/oe-entry.p** - it runs this procedure passing the customer number and order lines table, receiving back the order number.\n\n**OrderService.CancelOrder** [corpus/service/OrderService.cls#CancelOrder] delegates to **oe/oe-cancel.p** - it runs this procedure passing the order number to cancel.\n\nThe class header [corpus/service/OrderService.cls#main] mentions a third method for order totals that delegates to ar/ar-invoice.p, but the actual method implementation is not in the retrieved units, so I cannot confirm its details from the retrieved code.",
+   "citations": [
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/service/OrderService.cls#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/service/OrderService.cls#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 2,
+    "bad_citations": [
+     "corpus/service/OrderService.cls#main"
+    ]
+   },
+   "must_mention": {
+    "n_facts": 4,
+    "n_covered": 4,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/service/OrderService.cls#CreateOrder": {
+     "source": "seed",
+     "step": 0,
+     "chars": 367
+    },
+    "corpus/service/OrderService.cls#CancelOrder": {
+     "source": "seed",
+     "step": 0,
+     "chars": 126
+    },
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/oe/oe-price.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 978
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "corpus/service/OrderService.cls#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1328
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "F1",
+   "category": "flow",
+   "question": "What happens when an order is posted?",
+   "answer": "When an order is posted, the system processes every order with OrderStatus = \"Shipped\" in a nightly batch run [corpus/oe/oe-post.p#main]. For each shipped order, the posting process: (1) validates that all order lines are fully shipped (skipping orders with any lines still in \"Ordered\" or \"Backordered\" status), (2) creates an AR invoice by running ar/ar-invoice.p, which creates an ArHist record and increases the Customer.Balance by the invoice amount [corpus/ar/ar-invoice.p#main], (3) changes the Order.OrderStatus from \"Shipped\" to \"Posted\" [corpus/include/ordstat.i], and (4) optionally runs a site-specific exit hook (oe/oe-exit.p) if present. The entire process for one order\u2014invoice creation, status update, and exit hook\u2014runs in a single transaction that commits or rolls back together [corpus/oe/oe-post.p#main]. Inventory relief happens earlier during shipping, not during posting [corpus/oe/oe-post.p#main].",
+   "citations": [
+    "corpus/oe/oe-post.p#main",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/include/ordstat.i"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Order",
+    "corpus/oe/oe-post.p#main",
+    "corpus/include/ordstat.i",
+    "schema:ArHist",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:OrderLine"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 3,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 4,
+    "n_covered": 4,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "corpus/include/ordstat.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 593
+    },
+    "schema:ArHist": {
+     "source": "seed",
+     "step": 0,
+     "chars": 551
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "corpus/oe/oe-credit.p#get-open-balance": {
+     "source": "seed",
+     "step": 0,
+     "chars": 698
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "F2",
+   "category": "flow",
+   "question": "Walk through order creation, from entry to inventory allocation.",
+   "answer": "I have enough information in the retrieved units to walk through order creation from entry to inventory allocation. Let me provide the answer based on what I've read.\n\nOrder creation begins in oe/oe-entry.p when a customer number and temp-table of requested lines are passed in [corpus/oe/oe-entry.p#main]. First, the procedure creates the Order header by calling create-order-header, which generates a new order number from sequence next-ord-num and sets the OrderStatus to \"Ordered\" [corpus/oe/oe-entry.p#create-order-header]. Before adding any lines, a credit check runs via oe/oe-credit.p; if credit is declined, the entire transaction undoes [corpus/oe/oe-entry.p#main].\n\nAfter credit approval, the procedure loops through each requested line and calls add-order-line [corpus/oe/oe-entry.p#main]. For each line, add-order-line prices the item via oe/oe-price.p, then attempts inventory allocation by calling allocate-item in the persistent inv/inv-alloc.p handle [corpus/oe/oe-entry.p#add-order-line]. The allocate-item procedure (not shown in retrieved text but referenced) updates the Item table's Allocated field [schema:Item]. If allocation succeeds, the OrderLine is created with OrderLineStatus set to \"Ordered\"; if allocation fails, the line is created with status \"Backord\" (backordered) [corpus/oe/oe-entry.p#add-order-line]. The order completes successfully even if some lines are backordered.",
+   "citations": [
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "schema:Item"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "schema:Order",
+    "schema:Item",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/inv/inv-alloc.p#deallocate-item"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 1,
+    "gold_missed": [
+     "corpus/inv/inv-alloc.p"
+    ],
+    "n_citations": 4,
+    "n_good_citations": 3,
+    "bad_citations": [
+     "schema:Item"
+    ]
+   },
+   "must_mention": {
+    "n_facts": 5,
+    "n_covered": 5,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "schema:Item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 693
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "corpus/inv/inv-alloc.p#deallocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 530
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "F3",
+   "category": "flow",
+   "question": "When does a customer's balance get updated?",
+   "answer": "Looking at the retrieved code, I can see clear information about when the customer balance gets updated.\n\nThe customer's balance gets updated when an order is posted and invoiced. Specifically, in [corpus/ar/ar-invoice.p#main], the Customer.Balance is increased by the invoice amount when an ArHist (AR invoice) record is created for a shipped order. The code comment states \"the one place Customer.Balance goes UP; cash receipts bring it down (that system lives in the GL package, not here).\" This happens inside the transaction managed by [corpus/oe/oe-post.p#main], which runs nightly to invoice shipped orders. The balance update and ArHist record creation commit or roll back together as part of the same transaction.",
+   "citations": [
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Customer",
+    "corpus/oe/oe-post.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Customer",
+    "schema:ArHist",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/oe/oe-credit.p#main",
+    "schema:Order",
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-entry.p#create-order-header"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 3,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "schema:Customer": {
+     "source": "seed",
+     "step": 0,
+     "chars": 734
+    },
+    "schema:ArHist": {
+     "source": "seed",
+     "step": 0,
+     "chars": 551
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "corpus/oe/oe-credit.p#check-credit": {
+     "source": "seed",
+     "step": 0,
+     "chars": 554
+    },
+    "corpus/oe/oe-credit.p#get-open-balance": {
+     "source": "seed",
+     "step": 0,
+     "chars": 698
+    },
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/include/oeshared.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 619
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "F4",
+   "category": "flow",
+   "question": "What happens when an order is cancelled?",
+   "answer": "Looking at the retrieved code, I can answer this question directly from [corpus/oe/oe-cancel.p#main], which contains the complete cancellation logic.\n\nWhen an order is cancelled, the system performs these steps within a transaction:\n\n1. **Validates the order** - Only orders in \"Ordered\" status can be cancelled; shipped or posted orders must go through RMA instead.\n\n2. **Releases inventory allocation** - For each order line with status \"Ordered\", the system calls the deallocate-item procedure [corpus/inv/inv-alloc.p#deallocate-item] to return the allocated quantity back to available inventory by reducing Item.Allocated.\n\n3. **Cancels all lines** - Every OrderLine record has its OrderLineStatus set to \"Cancelled\". Backordered lines are cancelled without touching inventory since they were never allocated.\n\n4. **Cancels the header** - The Order.OrderStatus is set to \"Cancelled\".\n\nAll changes occur within a single transaction that will roll back on error.",
+   "citations": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/include/ordstat.i",
+    "schema:Order",
+    "schema:OrderLine",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-ship.p#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/include/ordstat.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 593
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    },
+    "corpus/service/OrderService.cls#CancelOrder": {
+     "source": "seed",
+     "step": 0,
+     "chars": 126
+    },
+    "corpus/oe/oe-credit.p#get-open-balance": {
+     "source": "seed",
+     "step": 0,
+     "chars": 698
+    },
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "corpus/inv/inv-alloc.p#deallocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 530
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "G1",
+   "category": "legacy-pattern",
+   "question": "Where are the shared order-entry variables and the shared customer buffer defined?",
+   "answer": "The shared order-entry variables `s-ordnum` and `s-custnum`, along with the shared customer buffer `sb-cust`, are all defined in the include file `oeshared.i`. This include file is used with the `NEW` parameter in the top-level entry program `oe/oe-entry.p` to create these shared resources, and is included without parameters in downstream programs like `oe/oe-credit.p` and `oe/oe-price.p` to access them.\n\nThe include file defines:\n- `s-ordnum` as a shared integer variable for the current order number\n- `s-custnum` as a shared integer variable for the current customer number  \n- `sb-cust` as a shared buffer for the Customer table\n\nThe file comment explicitly states to include it with `{include/oeshared.i NEW}` in the top-level entry program and `{include/oeshared.i}` everywhere downstream.",
+   "citations": [
+    "corpus/include/oeshared.i"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "schema:Order"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 1,
+    "n_good_citations": 1,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/include/oeshared.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 619
+    },
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/oe/oe-price.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 978
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/service/OrderService.cls#CreateOrder": {
+     "source": "seed",
+     "step": 0,
+     "chars": 367
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "G2",
+   "category": "legacy-pattern",
+   "question": "Which procedures rely on the shared customer buffer sb-cust?",
+   "answer": "I need to analyze which procedures rely on the shared customer buffer `sb-cust`. From the retrieved units, I can see that `sb-cust` is defined in the include file `oeshared.i` and is used by several procedures.\n\nLet me examine the evidence:\n\n1. **corpus/include/oeshared.i** defines `sb-cust` as a shared buffer for Customer and shows it's included by: oe/oe-credit.p#main, oe/oe-entry.p#main, and oe/oe-price.p#main.\n\n2. **corpus/oe/oe-credit.p#main** includes oeshared.i and explicitly states in its notes: \"Relies on the shared buffer sb-cust and shared s-ordnum positioned by oe/oe-entry.p\". The code checks `IF NOT AVAILABLE sb-cust` and returns an error if the customer is not positioned.\n\n3. **corpus/oe/oe-credit.p#check-credit** uses `sb-cust.Balance`, `sb-cust.CreditLimit`, and `sb-cust.CustNum` in its credit check logic.\n\n4. **corpus/oe/oe-credit.p#get-open-balance** uses `sb-cust.CustNum` to query orders for that customer.\n\n5. **corpus/oe/oe-entry.p#main** includes oeshared.i with the NEW keyword (defining the shared variables), positions sb-cust with a FIND statement, and uses `sb-cust.CustNum` in error messages.\n\n6. **corpus/oe/oe-entry.p#create-order-header** uses `sb-cust.CustNum`, `sb-cust.Terms`, and `sb-cust.SalesRep` when creating the Order record.\n\n7. **corpus/oe/oe-price.p#main** includes oeshared.i and states in its notes: \"Uses shared sb-cust ({include/oeshared.i}) for the customer discount - caller must have the customer positioned.\"\n\n8. **corpus/oe/oe-price.p#apply-discount** uses `sb-cust.Discount` to calculate the discount.\n\nThe procedures that rely on the shared customer buffer sb-cust are:\n- **oe/oe-credit.p** (main and check-credit procedures use sb-cust fields for credit checking)\n- **oe/oe-entry.p** (main positions sb-cust; create-order-header uses its fields)\n- **oe/oe-price.p** (apply-discount uses sb-cust.Discount for pricing)",
+   "citations": [
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-credit.p#get-open-balance"
+   ],
+   "invalid_citations": [
+    "corpus/oe/oe-entry"
+   ],
+   "retrieved": [
+    "corpus/oe/oe-credit.p#main",
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/inv/inv-alloc.p#main",
+    "schema:Customer"
+   ],
+   "citation": {
+    "n_gold": 3,
+    "n_gold_cited": 1,
+    "gold_missed": [
+     "corpus/oe/oe-entry.p",
+     "corpus/oe/oe-price.p"
+    ],
+    "n_citations": 4,
+    "n_good_citations": 4,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 3,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/include/oeshared.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 619
+    },
+    "corpus/oe/oe-price.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 978
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "corpus/oe/oe-credit.p#check-credit": {
+     "source": "seed",
+     "step": 0,
+     "chars": 554
+    },
+    "corpus/oe/oe-credit.p#get-open-balance": {
+     "source": "seed",
+     "step": 0,
+     "chars": 698
+    },
+    "corpus/oe/oe-price.p#apply-discount": {
+     "source": "seed",
+     "step": 0,
+     "chars": 381
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "schema:Customer": {
+     "source": "seed",
+     "step": 0,
+     "chars": 734
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "G3",
+   "category": "legacy-pattern",
+   "question": "If a customer orders 60 units of something, do they get a better price?",
+   "answer": "Looking at the retrieved code, I can see the pricing logic in the `apply-discount` procedure. Let me check if there's any additional information about volume breaks.\n\nThe code shows that volume discounts are applied at 50 and 100 units, but 60 units falls between these thresholds. According to `[corpus/oe/oe-price.p#apply-discount]`:\n\n- Orders of 100+ units get an additional 10% discount\n- Orders of 50-99 units get an additional 5% discount  \n- Orders under 50 units get no volume discount\n\nSo yes, a customer ordering 60 units gets a better price than ordering less than 50 units. They receive their standard customer discount (from the Customer.Discount field) plus an additional 5% volume break, with the total discount capped at 25% per credit memo 2001-14.",
+   "citations": [
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/oe/oe-price.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-price.p#main",
+    "schema:Customer",
+    "schema:OrderLine",
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "schema:Item",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-price.p#get-list-price"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-price.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 978
+    },
+    "schema:Customer": {
+     "source": "seed",
+     "step": 0,
+     "chars": 734
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    },
+    "corpus/rpt/rpt-backord.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1567
+    },
+    "corpus/oe/oe-price.p#apply-discount": {
+     "source": "seed",
+     "step": 0,
+     "chars": 381
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/oe/oe-credit.p#get-open-balance": {
+     "source": "seed",
+     "step": 0,
+     "chars": 698
+    },
+    "schema:Item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 693
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "corpus/oe/oe-price.p#get-list-price": {
+     "source": "seed",
+     "step": 0,
+     "chars": 310
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "G4",
+   "category": "legacy-pattern",
+   "question": "Which report lists backordered order lines?",
+   "answer": "The report that lists backordered order lines is **rpt-backord.p** [corpus/rpt/rpt-backord.p#main]. It selects every OrderLine where OrderLineStatus equals \"Backordered\" (the {&LIN-BACKORD} constant from ordstat.i), joins to Order, Item, and Customer, and outputs a report file named \"backord.rpt\" showing item number, item name, customer name, order number, quantity, on-hand stock, and on-order stock for each backordered line. The report also totals the backordered units and their extended value.",
+   "citations": [
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/include/ordstat.i"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-entry.p#main",
+    "schema:OrderLine",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/oe/oe-post.p#main"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 1,
+    "bad_citations": [
+     "corpus/include/ordstat.i"
+    ]
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/rpt/rpt-backord.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1567
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "corpus/include/ordstat.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 593
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    },
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "W1",
+   "category": "table-touch",
+   "question": "Which procedures update the Item table?",
+   "answer": "The Item table is updated by three procedures:\n\n1. **oe/oe-ship.p#ship-line** - Decrements Item.OnHand and Item.Allocated when shipping an order line, and updates the line status to shipped.\n\n2. **inv/inv-alloc.p#allocate-item** - Increments Item.Allocated when reserving stock for an order line.\n\n3. **inv/inv-alloc.p#deallocate-item** - Decrements Item.Allocated (floored at zero) when giving allocation back during order cancellation.",
+   "citations": [
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/inv/inv-alloc.p#allocate-item",
+    "corpus/inv/inv-alloc.p#deallocate-item"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/inv/inv-alloc.p#allocate-item",
+    "schema:Item",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "schema:OrderLine",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-entry.p#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 3,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    },
+    "corpus/inv/inv-alloc.p#deallocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 530
+    },
+    "corpus/inv/inv-alloc.p#allocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1015
+    },
+    "schema:Item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 693
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    },
+    "corpus/oe/oe-price.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 978
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    }
+   },
+   "steps": 1,
+   "trace": [
+    {
+     "action": "tool",
+     "step": 1,
+     "tool": "search",
+     "call": "search update Item table write Item",
+     "ok": true
+    },
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "W2",
+   "category": "table-touch",
+   "question": "Which procedures create or change Order header records?",
+   "answer": "I need to analyze which procedures create or change Order header records based on the retrieved units.\n\nFrom the retrieved units, I can see:\n\n1. **create-order-header** in oe/oe-entry.p - Creates Order records with CREATE Order and assigns initial field values\n2. **oe-ship.p#main** - Updates Order.OrderStatus to {&ORD-SHIPPED} and Order.ShipDate when all lines are shipped\n3. **oe-cancel.p#main** - Updates Order.OrderStatus to {&ORD-CANCELLED} when canceling an order\n4. **oe-post.p#main** - Updates Order.OrderStatus to {&ORD-POSTED} when posting shipped orders\n\nThe schema confirms these procedures update the Order table. All the evidence I need is already in my read set.\n\n**Answer:**\n\nFour procedures create or change Order header records:\n\n1. **oe/oe-entry.p#create-order-header** creates new Order records with CREATE Order, assigning OrderNum from the next-ord-num sequence, customer information, dates, and setting OrderStatus to {&ORD-ORDERED}.\n\n2. **oe/oe-ship.p#main** changes Order headers by updating OrderStatus to {&ORD-SHIPPED} and setting ShipDate to TODAY when all order lines have been shipped.\n\n3. **oe/oe-cancel.p#main** changes Order headers by updating OrderStatus to {&ORD-CANCELLED} when canceling orders that are still in Ordered status.\n\n4. **oe/oe-post.p#main** changes Order headers by updating OrderStatus to {&ORD-POSTED} during the nightly posting batch that invoices shipped orders.",
+   "citations": [
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-post.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:Order",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "schema:next-ord-num",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-entry.p#add-order-line"
+   ],
+   "citation": {
+    "n_gold": 4,
+    "n_gold_cited": 4,
+    "gold_missed": [],
+    "n_citations": 4,
+    "n_good_citations": 4,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 4,
+    "n_covered": 4,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 4,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "schema:next-ord-num": {
+     "source": "seed",
+     "step": 0,
+     "chars": 270
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  }
+ ]
+}

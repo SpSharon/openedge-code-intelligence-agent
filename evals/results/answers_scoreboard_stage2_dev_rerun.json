@@ -1,0 +1,980 @@
+{
+ "run_at": "2026-07-26T21:44:55+00:00",
+ "kind": "answers",
+ "label": "stage2_dev_rerun",
+ "cases_file": "answers.jsonl",
+ "llm": {
+  "model": "claude-sonnet-4-5",
+  "calls": 20,
+  "input_tokens": 93946,
+  "output_tokens": 4294,
+  "tokens_estimated": false,
+  "estimated_cost_usd": 0.3462
+ },
+ "fake": false,
+ "params": {
+  "k": 10,
+  "retriever": "frozen Stage 1 defaults",
+  "agent": "single",
+  "max_steps": null
+ },
+ "cost_estimate_before_run": {
+  "model": "claude-sonnet-4-5",
+  "calls": 20,
+  "est_input_tokens": 77683,
+  "est_output_tokens": 7000,
+  "est_cost_usd": 0.338,
+  "note": "chars/4 token estimate; actual metered usage is stamped into the scoreboard after the run"
+ },
+ "metrics": {
+  "citation_recall": 0.8857,
+  "citation_precision": 0.9074,
+  "answer_correctness": 1.0,
+  "perfect_answer_cases": 20,
+  "gold_in_context_rate": 1.0,
+  "refusals": 0,
+  "invalid_citation_total": 0,
+  "n_cases": 20,
+  "n_gold_targets": 35,
+  "n_citations_total": 54
+ },
+ "by_category": {
+  "call-graph": {
+   "cases": 5,
+   "citation_recall": 0.6667,
+   "answer_correctness": 1.0
+  },
+  "flow": {
+   "cases": 4,
+   "citation_recall": 0.8571,
+   "answer_correctness": 1.0
+  },
+  "legacy-pattern": {
+   "cases": 4,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  },
+  "schema": {
+   "cases": 5,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  },
+  "table-touch": {
+   "cases": 2,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  }
+ },
+ "cases": [
+  {
+   "id": "S1",
+   "category": "schema",
+   "question": "What fields does the OrderLine table have, and what is its primary index?",
+   "answer": "The OrderLine table has the following fields: OrderNum (integer), LineNum (integer), ItemNum (integer), Qty (integer), Price (decimal), Discount (integer), ExtendedPrice (decimal), and OrderLineStatus (character). Its primary index is OrderLine, which is a unique primary index on OrderNum and LineNum.",
+   "citations": [
+    "schema:OrderLine"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "schema:OrderLine",
+    "schema:Item",
+    "schema:Order",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "schema:ArHist",
+    "schema:Customer",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/oe/oe-cancel.p#main"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 1,
+    "n_good_citations": 1,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 4,
+    "n_covered": 4,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "S2",
+   "category": "schema",
+   "question": "Where is a customer's credit limit stored?",
+   "answer": "A customer's credit limit is stored in the `CreditLimit` field of the `Customer` table. This is a decimal field described as \"Maximum credit exposure incl. open orders\" in the schema. The credit-check procedure [corpus/oe/oe-credit.p#check-credit] reads `sb-cust.CreditLimit` to compare against the customer's balance plus open order exposure when making credit decisions.",
+   "citations": [
+    "schema:Customer",
+    "corpus/oe/oe-credit.p#check-credit"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-credit.p#check-credit",
+    "schema:Customer",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/include/oeshared.i",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "schema:Order",
+    "corpus/oe/oe-post.p#main"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "S3",
+   "category": "schema",
+   "question": "Which table records posted invoices, and which procedure creates records in it?",
+   "answer": "The **ArHist** table records posted invoices. The **ar/ar-invoice.p#main** procedure creates records in it.\n\nAccording to the schema, ArHist holds \"AR invoice history - one record per posted invoice\" with fields including InvoiceNum, CustNum, OrderNum, InvoiceDate, Amount, and SalesRep. The ar/ar-invoice.p#main procedure creates the ArHist record for one shipped order, assigns it an invoice number from the next-inv-num sequence, copies data from the Order record, calculates the invoice total, and updates the customer balance.",
+   "citations": [
+    "schema:ArHist",
+    "corpus/ar/ar-invoice.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "schema:ArHist",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:Order",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-entry.p#main",
+    "schema:OrderLine",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/service/OrderService.cls#CreateOrder"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "S4",
+   "category": "schema",
+   "question": "How are new order numbers generated?",
+   "answer": "New order numbers are generated using the database sequence `next-ord-num` (initial value 1000, increment 1). In the procedure `create-order-header` within `oe/oe-entry.p`, the next value is obtained via `NEXT-VALUE(next-ord-num)` and assigned to both the shared variable `s-ordnum` and the new Order record's `OrderNum` field. This happens inside the main transaction of the order entry process. According to the notes in `oe/oe-entry.p`, if a credit check is declined and the transaction is undone, the sequence value is \"burned\" (consumed but not used), and AR is aware of this behavior and does not care about the gaps.",
+   "citations": [
+    "schema:next-ord-num",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-entry.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:next-ord-num",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:Order",
+    "corpus/oe/oe-ship.p#main",
+    "schema:ArHist",
+    "schema:OrderLine"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 2,
+    "bad_citations": [
+     "corpus/oe/oe-entry.p#main"
+    ]
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "S5",
+   "category": "schema",
+   "question": "What are the possible order status values?",
+   "answer": "The possible order status values are \"Ordered\", \"Shipped\", \"Posted\", and \"Cancelled\". These are defined as global preprocessor constants in the include file ordstat.i and stored in the Order.OrderStatus field.",
+   "citations": [
+    "corpus/include/ordstat.i",
+    "schema:Order"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/rpt/rpt-backord.p#main",
+    "schema:Order",
+    "corpus/oe/oe-ship.p#main",
+    "schema:OrderLine",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:next-ord-num",
+    "corpus/oe/oe-ship.p#ship-line"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 5,
+    "n_covered": 5,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "C1",
+   "category": "call-graph",
+   "question": "Which procedure calls allocate-item?",
+   "answer": "The procedure `allocate-item` is called by `oe/oe-entry.p#add-order-line`. Specifically, the code shows:\n\n```\nRUN allocate-item IN gh-alloc (INPUT  ip-itemnum,\n                               INPUT  ip-qty,\n                               OUTPUT l-alloc).\n```\n\nThis call happens after pricing the line and before creating the OrderLine record. The `gh-alloc` handle points to the persistent `inv/inv-alloc.p` procedure.",
+   "citations": [
+    "corpus/oe/oe-entry.p#add-order-line"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/inv/inv-alloc.p#allocate-item",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/inv/inv-alloc.p#check-avail",
+    "corpus/inv/inv-alloc.p#main",
+    "schema:Item",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/oe/oe-credit.p#check-credit"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 1,
+    "n_good_citations": 1,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "C2",
+   "category": "call-graph",
+   "question": "Which other programs does order entry run?",
+   "answer": "The order entry program (`oe/oe-entry.p`) runs three other programs:\n\n1. **`oe/oe-credit.p`** - runs to perform credit check after the order header is created but before lines are added [corpus/oe/oe-entry.p#main]\n\n2. **`oe/oe-price.p`** - runs for each order line to calculate unit price and discount [corpus/oe/oe-entry.p#add-order-line]\n\n3. **`inv/inv-alloc.p`** - runs persistently to handle inventory allocation for each line through its `allocate-item` procedure [corpus/oe/oe-entry.p#add-order-line]\n\nThe credit check runs once per order, pricing runs once per line, and the allocation manager is instantiated lazily and then called for each line that needs allocation.",
+   "citations": [
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#add-order-line"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/oe/oe-price.p#main"
+   ],
+   "citation": {
+    "n_gold": 3,
+    "n_gold_cited": 0,
+    "gold_missed": [
+     "corpus/oe/oe-credit.p",
+     "corpus/oe/oe-price.p",
+     "corpus/inv/inv-alloc.p"
+    ],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 3,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "C3",
+   "category": "call-graph",
+   "question": "Which procedures start the inventory allocation manager as a persistent procedure?",
+   "answer": "Based on the retrieved code units, two procedures start the inventory allocation manager (`inv/inv-alloc.p`) as a persistent procedure:\n\n1. **oe/oe-entry.p** in the `add-order-line` procedure checks if the allocation manager handle is valid, and if not, runs `inv/inv-alloc.p PERSISTENT SET gh-alloc` [corpus/oe/oe-entry.p#add-order-line].\n\n2. **oe/oe-cancel.p** in its main block performs the same check and instantiation: if the handle is not valid, it runs `inv/inv-alloc.p PERSISTENT SET gh-alloc` [corpus/oe/oe-cancel.p#main].\n\nBoth procedures use the same pattern of checking `IF NOT VALID-HANDLE(gh-alloc)` before starting the persistent procedure, implementing the lazy instantiation mentioned in the allocation manager's header comments.",
+   "citations": [
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-cancel.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-entry.p#create-order-header"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "C4",
+   "category": "call-graph",
+   "question": "What calls ar-invoice.p?",
+   "answer": "Based on the retrieved code units, **ar-invoice.p is called by oe/oe-post.p**.\n\nSpecifically, oe/oe-post.p calls ar-invoice.p within its main transaction block using `RUN ar/ar-invoice.p (INPUT Order.OrderNum, OUTPUT i-invnum)`. This happens during the nightly order posting batch process, where oe-post.p invoices every shipped order. The call occurs inside a retry loop (inv-blk) that attempts up to 3 times if ar-invoice.p returns 0 due to customer lock failures.",
+   "citations": [
+    "corpus/oe/oe-post.p#main",
+    "corpus/ar/ar-invoice.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Customer",
+    "corpus/ar/ar-invoice.p#calc-order-total",
+    "schema:next-inv-num",
+    "corpus/oe/oe-post.p#main",
+    "schema:ArHist",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "schema:Order"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "C5",
+   "category": "call-graph",
+   "question": "Which OrderService methods delegate to legacy .p procedures, and which procedures do they run?",
+   "answer": "Based on the retrieved code units, the OrderService class has two methods that delegate to legacy .p procedures:\n\n1. **CreateOrder** [corpus/service/OrderService.cls#CreateOrder] runs `oe/oe-entry.p`, passing the customer number and temp-table of order lines, and receiving back the order number.\n\n2. **CancelOrder** [corpus/service/OrderService.cls#CancelOrder] runs `oe/oe-cancel.p`, passing the order number to cancel.\n\nThe class comment in [corpus/service/OrderService.cls#main] confirms this design: it is an \"OO facade over the legacy order-entry programs\" where \"all business logic stays in the .p files.\"",
+   "citations": [
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/service/OrderService.cls#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/service/OrderService.cls#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 2,
+    "bad_citations": [
+     "corpus/service/OrderService.cls#main"
+    ]
+   },
+   "must_mention": {
+    "n_facts": 4,
+    "n_covered": 4,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "F1",
+   "category": "flow",
+   "question": "What happens when an order is posted?",
+   "answer": "When an order is posted, the following happens:\n\n1. The posting process runs in `oe/oe-post.p` and processes orders with OrderStatus = \"Shipped\" [corpus/oe/oe-post.p#main].\n\n2. Before posting, the system checks that all OrderLine records have been shipped - if any line still has status \"Ordered\" or \"Backordered\", the order is skipped [corpus/oe/oe-post.p#main].\n\n3. The system calls `ar/ar-invoice.p` to create an ArHist (invoice) record with the order total, and this also increases the Customer.Balance by the invoice amount [corpus/ar/ar-invoice.p#main].\n\n4. The Order.OrderStatus is changed from \"Shipped\" to \"Posted\" [corpus/oe/oe-post.p#main] [corpus/include/ordstat.i].\n\n5. If a site-specific exit procedure exists at `oe/oe-exit.p`, it is run for the order [corpus/oe/oe-post.p#main].\n\nAll of these steps occur within a single transaction, so they either all commit together or all roll back together [corpus/oe/oe-post.p#main].",
+   "citations": [
+    "corpus/oe/oe-post.p#main",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/include/ordstat.i"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Order",
+    "corpus/oe/oe-post.p#main",
+    "corpus/include/ordstat.i",
+    "schema:ArHist",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:OrderLine"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 3,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 4,
+    "n_covered": 4,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "F2",
+   "category": "flow",
+   "question": "Walk through order creation, from entry to inventory allocation.",
+   "answer": "Order creation flows through the following steps:\n\n1. **Entry begins** in [corpus/oe/oe-entry.p#main], which validates the customer and starts a transaction.\n\n2. **Header creation**: The procedure calls create-order-header [corpus/oe/oe-entry.p#create-order-header], which assigns the next order number from sequence next-ord-num, creates the Order record, and sets OrderStatus to {&ORD-ORDERED}.\n\n3. **Credit check**: After the header is created but before any lines are added, oe/oe-credit.p runs. If credit is declined, the transaction UNDOs and the order fails (the sequence value stays burned).\n\n4. **Line processing**: For each requested line in the input temp-table tt-line, add-order-line [corpus/oe/oe-entry.p#add-order-line] is called, which:\n   - Validates the Item exists\n   - Calls oe/oe-price.p to get price and discount\n   - Calls allocate-item in the persistent inv/inv-alloc.p handle to attempt inventory allocation\n   - Creates the OrderLine record with OrderLineStatus set to {&LIN-ORDERED} if allocation succeeded, or {&LIN-BACKORD} if it failed\n\n5. **Inventory allocation**: When allocate-item is called (through the persistent gh-alloc handle), it updates the Item table's Allocated field to reserve inventory for ordered lines. Short allocation does not fail the order\u2014the line simply goes on backorder.\n\nThe transaction commits, and the order number is returned to the caller.",
+   "citations": [
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "schema:Order"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "schema:Order",
+    "schema:Item",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/inv/inv-alloc.p#deallocate-item"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 1,
+    "gold_missed": [
+     "corpus/inv/inv-alloc.p"
+    ],
+    "n_citations": 4,
+    "n_good_citations": 3,
+    "bad_citations": [
+     "schema:Order"
+    ]
+   },
+   "must_mention": {
+    "n_facts": 5,
+    "n_covered": 5,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "F3",
+   "category": "flow",
+   "question": "When does a customer's balance get updated?",
+   "answer": "A customer's balance gets updated in exactly one place: when an AR invoice is created for a shipped order. This happens in `ar/ar-invoice.p` during the order posting process. Specifically, when `ar/ar-invoice.p` creates an `ArHist` record for an invoice, it increases `Customer.Balance` by the invoice amount with the assignment `Customer.Balance = Customer.Balance + ArHist.Amount`. This code runs inside the transaction controlled by `oe/oe-post.p`, which processes shipped orders nightly. The comment in `ar/ar-invoice.p` notes this is \"the one place Customer.Balance goes UP; cash receipts bring it down (that system lives in the GL package, not here).\"",
+   "citations": [
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Customer",
+    "corpus/oe/oe-post.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Customer",
+    "schema:ArHist",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/oe/oe-credit.p#main",
+    "schema:Order",
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-entry.p#create-order-header"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 3,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "F4",
+   "category": "flow",
+   "question": "What happens when an order is cancelled?",
+   "answer": "When an order is cancelled, the following happens:\n\n1. The order must be in \"Ordered\" status to be cancelled [corpus/oe/oe-cancel.p#main].\n\n2. For each order line that is in \"Ordered\" status, the allocated inventory is released back by calling the deallocate-item procedure, which decrements Item.Allocated [corpus/oe/oe-cancel.p#main] [corpus/inv/inv-alloc.p#deallocate-item].\n\n3. Backordered lines are cancelled without touching inventory since they were never allocated [corpus/oe/oe-cancel.p#main].\n\n4. All order lines have their OrderLineStatus set to \"Cancelled\" [corpus/oe/oe-cancel.p#main].\n\n5. The order header's OrderStatus is set to \"Cancelled\" [corpus/oe/oe-cancel.p#main].\n\nAll of this happens within a single transaction that can be rolled back on error [corpus/oe/oe-cancel.p#main].",
+   "citations": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/include/ordstat.i",
+    "schema:Order",
+    "schema:OrderLine",
+    "corpus/service/OrderService.cls#CancelOrder",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-ship.p#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "G1",
+   "category": "legacy-pattern",
+   "question": "Where are the shared order-entry variables and the shared customer buffer defined?",
+   "answer": "The shared order-entry variables `s-ordnum` and `s-custnum`, along with the shared customer buffer `sb-cust`, are defined in the include file `oeshared.i`. This include file is brought into the top-level entry program `oe/oe-entry.p` with the `{include/oeshared.i NEW}` directive, which creates the NEW shared definitions. Downstream programs like `oe/oe-credit.p` and `oe/oe-price.p` include it without the NEW keyword (`{include/oeshared.i}`) to reference the already-defined shared variables and buffer.",
+   "citations": [
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-entry.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/service/OrderService.cls#CreateOrder",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "schema:Order"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "G2",
+   "category": "legacy-pattern",
+   "question": "Which procedures rely on the shared customer buffer sb-cust?",
+   "answer": "The shared customer buffer `sb-cust` is relied upon by three procedures:\n\n1. **oe/oe-credit.p** - Uses `sb-cust` to perform credit checks. The main block checks if `sb-cust` is available, and the `check-credit` procedure reads `sb-cust.Balance`, `sb-cust.CreditLimit`, and `sb-cust.CustNum` to determine credit approval.\n\n2. **oe/oe-entry.p** - Positions `sb-cust` by finding the customer record based on `ip-custnum` in its main block, then uses `sb-cust.CustNum`, `sb-cust.Terms`, and `sb-cust.SalesRep` when creating the order header in the `create-order-header` procedure.\n\n3. **oe/oe-price.p** - Uses `sb-cust.Discount` in the `apply-discount` procedure to calculate the customer's standard discount percentage.\n\nAll three procedures include `{include/oeshared.i}` which defines the shared buffer.",
+   "citations": [
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/include/oeshared.i"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-credit.p#main",
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/inv/inv-alloc.p#main",
+    "schema:Customer"
+   ],
+   "citation": {
+    "n_gold": 3,
+    "n_gold_cited": 3,
+    "gold_missed": [],
+    "n_citations": 7,
+    "n_good_citations": 7,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 3,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "G3",
+   "category": "legacy-pattern",
+   "question": "If a customer orders 60 units of something, do they get a better price?",
+   "answer": "Yes, if a customer orders 60 units, they get a better price through an additional volume discount. The pricing engine in [corpus/oe/oe-price.p#apply-discount] adds a 5% discount when the quantity is 50 or more units (but less than 100). This volume discount is added to the customer's standard discount from the Customer table, with a total discount cap of 25% per credit memo 2001-14. So an order of 60 units would receive the customer's standard discount plus the 5% volume break.",
+   "citations": [
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/oe/oe-price.p#main",
+    "schema:Customer"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-price.p#main",
+    "schema:Customer",
+    "schema:OrderLine",
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-price.p#apply-discount",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "schema:Item",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-price.p#get-list-price"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 2,
+    "bad_citations": [
+     "schema:Customer"
+    ]
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "G4",
+   "category": "legacy-pattern",
+   "question": "Which report lists backordered order lines?",
+   "answer": "The report that lists backordered order lines is **rpt-backord.p** [corpus/rpt/rpt-backord.p#main]. This report selects every OrderLine where OrderLineStatus equals \"Backordered\" (using the {&LIN-BACKORD} constant from ordstat.i), and displays the item number, item name, customer name, order number, quantity, on-hand inventory, and on-order inventory for each backordered line. The report outputs to a file named \"backord.rpt\" and includes totals for both the number of units backordered and their total value.",
+   "citations": [
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/include/ordstat.i"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-entry.p#main",
+    "schema:OrderLine",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/oe/oe-post.p#main"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 1,
+    "bad_citations": [
+     "corpus/include/ordstat.i"
+    ]
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "W1",
+   "category": "table-touch",
+   "question": "Which procedures update the Item table?",
+   "answer": "Based on the retrieved code units, three procedures update the Item table:\n\n1. **oe/oe-ship.p#ship-line** - Updates Item.OnHand and Item.Allocated when shipping order lines. It decrements both fields by the OrderLine.Qty and updates the Item record directly with an EXCLUSIVE-LOCK.\n\n2. **inv/inv-alloc.p#allocate-item** - Updates Item.Allocated when reserving stock for an order line. It increments the Allocated field by the requested quantity.\n\n3. **inv/inv-alloc.p#deallocate-item** - Updates Item.Allocated when giving allocation back (during order cancellation). It decrements the Allocated field, flooring at zero.\n\nThe schema documentation for Item [schema:Item] confirms these three procedures as the ones that update the Item table.",
+   "citations": [
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/inv/inv-alloc.p#allocate-item",
+    "schema:Item"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/inv/inv-alloc.p#allocate-item",
+    "schema:Item",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "schema:OrderLine",
+    "corpus/oe/oe-price.p#main",
+    "corpus/oe/oe-entry.p#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 4,
+    "n_good_citations": 4,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  },
+  {
+   "id": "W2",
+   "category": "table-touch",
+   "question": "Which procedures create or change Order header records?",
+   "answer": "Based on the retrieved code units, the following procedures create or change Order header records:\n\n1. **oe/oe-entry.p#create-order-header** creates new Order records with initial values including OrderNum, CustNum, OrderDate, PromiseDate, Terms, SalesRep, and OrderStatus set to {&ORD-ORDERED}.\n\n2. **oe/oe-ship.p#main** changes Order records by setting OrderStatus to {&ORD-SHIPPED} and ShipDate to TODAY when all lines are shipped.\n\n3. **oe/oe-cancel.p#main** changes Order records by setting OrderStatus to {&ORD-CANCELLED} when an order is cancelled.\n\n4. **oe/oe-post.p#main** changes Order records by setting OrderStatus to {&ORD-POSTED} during the nightly posting batch process.",
+   "citations": [
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-post.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:Order",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "schema:next-ord-num",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-entry.p#add-order-line"
+   ],
+   "citation": {
+    "n_gold": 4,
+    "n_gold_cited": 4,
+    "gold_missed": [],
+    "n_citations": 4,
+    "n_good_citations": 4,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 4,
+    "n_covered": 4,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 4,
+    "gold_absent": []
+   },
+   "read": null,
+   "steps": null,
+   "trace": null
+  }
+ ]
+}

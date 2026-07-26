@@ -92,13 +92,28 @@ The committed scoreboards were re-scored offline from their stored answers
 after the markdown-robustness fix (patterns unchanged; see each file's
 `rescore_note`).
 
-## Stage 3 — first step (after Stage 2 closes)
+## Stage 3 — built and measured (2026-07-26)
 
-Tool-using agent that closes the graph-walk gap: give the model tools
-(`read_unit(unit_id)`, `walk_calls(unit_id, direction)`, `search(query)`)
-over the Stage 1 index, an agent loop with a step budget, and re-run BOTH
-answer scoreboards unchanged — the delta on call-graph cases (retrieval
-ceiling 0.667@5 today) is the headline Stage 3 measurement.
+Tool-using agent (`openedge_agent/agent3.py`): tools `read_unit`, `walk_calls`,
+`search` over the Stage 1 index, an agent loop with a bounded step budget, the
+same answer/citation contract as Stage 2, scored via `--agent tool` with the
+frozen scorer unchanged. Designed and adversarially reviewed by Opus 5, built by
+Fable, verified by a fresh-context subagent (invariant `citations ⊆ read_set`,
+26/26) and 98/98 tests.
+
+**Result** (same-day, model-held-constant, `claude-sonnet-4-5`, temp 0; held-out
+3x): the tools deliver *reliability* where retrieval is incomplete and nothing
+where it isn't. Held-out — single-shot unstable (correctness 0.74–0.85, 2–4
+spurious refusals/run, mis-answers the refusal case); the tool agent is stable
+(1.000 correctness/recall/precision all 3 runs, refuses only H9, 0 hallucinated
+cites). Dev — no gain (recall 0.829 vs 0.886), C2 unmoved (0.667; its gold was
+already in context — a citation-selection limit no tool touches). Out-of-retrieval
+recovery (H1/H2) came via id-inference-and-read, **not `search`**. Full read in
+the README "Stage 3" section; trail in `BUILD_MEMORY`.
+
+**Open next steps (optional):** force/exercise `search` on the retrieval-gap
+cases to test content-based recovery independent of naming; a held-out split
+larger than 9; a real neural encoder (the embed leg is LSA today).
 
 ## Rules that carry over
 

@@ -48,6 +48,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from openedge_agent.agent import REFUSAL_PHRASE, Agent  # noqa: E402
+from openedge_agent.agent3 import ToolAgent  # noqa: E402
 from openedge_agent.llm import (  # noqa: E402
     AnthropicLLM,
     DEFAULT_MODEL,
@@ -206,6 +207,14 @@ def run_cases(agent: Agent, cases: list[dict]) -> list[dict]:
             "citation": score_citations(case, out["citations"]),
             "must_mention": score_must_mention(case, out["answer"]),
             "context": gold_in_context(case, out["retrieved"]),
+            # Stage 3 provenance, passed through verbatim (None for the
+            # single-shot Stage 2 agent, which returns none of these keys):
+            # which units were read and how, how many tool steps ran, and
+            # the action trace. Additive only; no scoring function reads
+            # these keys.
+            "read": out.get("read"),
+            "steps": out.get("steps"),
+            "trace": out.get("trace"),
         }
         rows.append(row)
         mm = row["must_mention"]
@@ -252,6 +261,10 @@ def main() -> None:
                     help="offline plumbing smoke test with FakeLLM")
     ap.add_argument("--yes", action="store_true",
                     help="skip the pre-spend confirmation prompt")
+    ap.add_argument("--agent", default="single", choices=["single", "tool"],
+                    help="single = Stage 2 Agent (default), tool = Stage 3 "
+                         "ToolAgent (multi-step: the printed cost estimate "
+                         "prices a 1-step run and is a LOWER BOUND)")
     args = ap.parse_args()
 
     cases = load_cases(Path(args.cases))
@@ -269,7 +282,8 @@ def main() -> None:
     else:
         llm = AnthropicLLM(model=args.model)
 
-    agent = Agent(index_dir=args.index, llm=llm, k=args.k)
+    agent_cls = ToolAgent if args.agent == "tool" else Agent
+    agent = agent_cls(index_dir=args.index, llm=llm, k=args.k)
 
     est = estimate_cost(agent, cases, args.model)
     print(f"cost estimate for a real run: ~${est['est_cost_usd']} "
@@ -316,7 +330,11 @@ def main() -> None:
         "cases_file": str(Path(args.cases).name),
         "llm": meter,
         "fake": bool(args.fake),
-        "params": {"k": agent.k, "retriever": "frozen Stage 1 defaults"},
+        "params": {"k": agent.k, "retriever": "frozen Stage 1 defaults",
+                   # provenance: which agent produced this scoreboard, and
+                   # its step budget (None for the single-shot Stage 2 agent)
+                   "agent": args.agent,
+                   "max_steps": getattr(agent, "max_steps", None)},
         "cost_estimate_before_run": est,
         **agg,
         "cases": rows,

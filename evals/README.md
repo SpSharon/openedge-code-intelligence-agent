@@ -8,7 +8,9 @@ The same frozen 20 questions with the same gold/acceptable targets
 alternative case-insensitive regexes (covered if ANY matches). Scored by
 `answer_score.py`: citation recall/precision reuse `target_matches` below;
 answer correctness = macro-averaged fact coverage, with no LLM judge in the
-loop. Facts were audited by a fresh-context AI reviewer against the corpus
+loop. Both agents are scored the same way: `--agent {single,tool}` selects the
+Stage 2 single-shot RAG (default) or the Stage 3 tool-using agent, against this
+same frozen rubric — the scoring logic is untouched. Facts were audited by a fresh-context AI reviewer against the corpus
 (all true; six patterns tightened/loosened after the audit). These 20 are a
 DEV set — the prompt was written against them; `answers_heldout.jsonl`
 carries the held-out questions that measure generalization.
