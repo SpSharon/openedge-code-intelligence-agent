@@ -4,11 +4,24 @@ An agent that understands a legacy Progress 4GL / OpenEdge (ABL) codebase and
 answers plain-English questions about it with citations — and refuses to guess
 when the answer isn't in the retrieved code. Legacy 4GL is hard to navigate
 and poorly served by modern tooling, so an accurate, *grounded* code assistant
-is genuinely useful. This repo contains **Stage 1** (the measured retrieval
-foundation + evaluation set) and **Stage 2** (the citation-bearing answer
-agent over it, with its own answer/citation scoreboard). The measure exists
-before the thing it measures — in both stages the eval set was written and
-independently verified before the code it scores.
+is genuinely useful.
+
+The repo is built in three measured stages, each with its own scoreboard:
+
+- **Stage 1** — the retrieval foundation, and the evaluation set it is scored
+  against.
+- **Stage 2** — the citation-bearing answer agent over that retrieval, with an
+  answer/citation scoreboard of its own.
+- **Stage 3** — a tool-using agent (`read_unit` / `walk_calls` / `search`) over
+  the frozen Stage 1 index. It emits the same answer/citation contract as
+  Stage 2, so the unchanged scorer runs both head-to-head.
+
+The measure exists before the thing it measures — at every stage the eval set
+was written and independently verified before the code it scores. The Stage 3
+comparison is reported the way it came out rather than the way it was hoped:
+the tools deliver reliability where single-shot retrieval is incomplete, and
+nothing where it is already complete. See
+[Stage 3 — the tool-using agent](#stage-3--the-tool-using-agent).
 
 ## How this is built (read this first)
 
