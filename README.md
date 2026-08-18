@@ -205,9 +205,10 @@ index — `read_unit(unit_id)`, `walk_calls(unit_id, direction)`, `search(query)
 — and an agent loop with a bounded step budget (max 6 tool executions, 9 LLM
 calls). It emits the **same** answer/`CITATIONS` contract as Stage 2, so the
 frozen scorer runs it unchanged via `--agent tool`. The grounding guarantee is
-structural: `walk_calls` and `search` return no unit body and add nothing to the
-citable read-set, so a unit can be cited only after a `read_unit` step actually
-reads it — `citations ⊆ read_set` by construction, not by instruction
+structural: the citable set is the seed context plus whatever `read_unit` has
+read; `walk_calls` and `search` return no unit body and add nothing to it, so
+a unit outside that set cannot be cited — `citations ⊆ read_set` by
+construction, not by instruction
 (fuzz-verified: 1500 adversarial reply streams, 0 violations). The refusal
 contract and `parse_response` are Stage 2's, unchanged.
 
