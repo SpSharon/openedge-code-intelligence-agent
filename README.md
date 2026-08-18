@@ -366,7 +366,10 @@ HANDOFF.md           state + exact next step for Stage 2
 
 Stage 1: measured retrieval foundation — done. Stage 2: the
 citation-bearing answer agent + answer/citation scoreboard — built,
-offline-verified; measured — dev answer-correctness 0.99, held-out 0.889 (a fresh, sub-agent-verified set).
+offline-verified; measured — dev answer-correctness 0.99, held-out 0.889 (a
+fresh, sub-agent-verified set — a single-run figure, a favorable sample rather
+than a stable estimate; the same-day 3x re-run puts single-shot held-out at
+0.74–0.85, per the Stage 2 section above).
 Stage 3: tool-using agent — read-unit, walk-calls, search — built and
 measured. It delivers reliability where single-shot retrieval is incomplete
 (held-out) and nothing where it is already complete (dev); the
