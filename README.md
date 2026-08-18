@@ -329,7 +329,8 @@ python -m openedge_agent.ingest        # corpus -> index/  (~1s)
 python -m openedge_agent.score         # eval -> printed report + evals/results/*.json
 python -m openedge_agent.score --all   # bm25 / embed / hybrid ablation
 python -m openedge_agent.retrieve "what calls ar-invoice.p?"   # ad-hoc query
-python -m unittest discover -s tests   # test suite
+python -m unittest discover -s tests   # test suite (needs index/ — run the
+                                       #   ingest line above once, first)
 ```
 
 `python -m openedge_agent.score` with no flags reproduces the headline hybrid
