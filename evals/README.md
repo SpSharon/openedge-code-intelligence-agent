@@ -27,6 +27,23 @@ tuned-against. Retrieval ceiling on this set is 0.846 (11/13 gold targets
 reach the top-10), vs 1.000 on the dev set — reported so a lower answer
 score reads as retrieval-bounded, not agent failure.
 
+### Re-deriving a saved scoreboard offline (`--rescore`)
+
+Every `evals/results/answers_scoreboard_*.json` archives, per case, the
+model's answer, citations, and retrieved unit ids. `--rescore` re-runs the
+same scoring functions (`score_citations`, `score_must_mention`,
+`gold_in_context`, `aggregate`) over those archived rows and compares the
+recomputed metrics with the ones stored in the file, exiting non-zero on
+any difference:
+
+    python evals/answer_score.py --rescore evals/results/answers_scoreboard_stage3_heldout_r1.json
+
+No LLM call, no API key, no network, no index; it writes and modifies
+nothing. What it proves: the published metrics follow from the archived
+answers under the current scorer — the scoring is checkable by anyone.
+What it does not prove: the answers themselves; regenerating those still
+needs `ANTHROPIC_API_KEY` and a real run.
+
 # Retrieval eval set
 
 `retrieval.jsonl` is the ruler for Stage 1: 20 natural-language questions about

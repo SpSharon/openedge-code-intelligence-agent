@@ -343,6 +343,13 @@ Stage 2 (offline parts need nothing extra; real answers need
 ```
 python evals/answer_score.py --dry-run          # offline: ceiling + cost estimate
 python evals/answer_score.py --fake             # offline: pipeline smoke (FakeLLM)
+python evals/answer_score.py --rescore \
+    evals/results/answers_scoreboard_stage3_heldout_r1.json
+                                                # offline: re-derive a saved scoreboard's
+                                                #   scoring from its archived answers and
+                                                #   check it matches the stored metrics
+                                                #   (reproduces the scoring, NOT the answers
+                                                #   — regenerating those needs a key)
 python evals/answer_score.py                    # real run; confirms cost first
 python -m openedge_agent.agent "what calls ar-invoice.p?"          # one question
 python -m openedge_agent.agent --fake "what calls ar-invoice.p?"   # offline demo

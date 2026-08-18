@@ -24,6 +24,15 @@ Modes
     --fake      OFFLINE pipeline smoke test with a scripted FakeLLM.
                 The saved scoreboard is labelled fake; its "scores"
                 validate plumbing, never answer quality.
+    --rescore SCOREBOARD.json
+                OFFLINE. No LLM, no API key, no network, no index. Reads
+                the per-case answers/citations archived in a saved
+                scoreboard, re-runs the SAME scoring functions over them,
+                and prints the recomputed metrics next to the stored ones
+                (exit 1 if any differ). Writes nothing. This re-derives
+                the SCORING of a published run from its archived answers;
+                it does NOT regenerate the answers — reproducing those
+                still needs a real (paid) run.
     (default)   Real run via the Anthropic API. Prints the cost
                 estimate and asks for confirmation before spending
                 (skip the prompt with --yes). Model + meter usage are
@@ -33,6 +42,7 @@ Usage (from the repo root):
     python evals/answer_score.py --dry-run
     python evals/answer_score.py                # real; needs ANTHROPIC_API_KEY
     python evals/answer_score.py --cases evals/answers_heldout.jsonl --label heldout
+    python evals/answer_score.py --rescore evals/results/answers_scoreboard_stage3_heldout_r1.json
 """
 
 from __future__ import annotations
@@ -157,6 +167,64 @@ def aggregate(rows: list[dict]) -> dict:
     return {"metrics": agg, "by_category": by_cat}
 
 
+def rescore(board_path: Path) -> int:
+    """Re-derive a saved scoreboard's metrics from its own archived rows.
+
+    Offline by construction: reads the per-case answer, citations and
+    retrieved ids already stored in the scoreboard, re-runs
+    score_citations / score_must_mention / gold_in_context against the
+    eval set named in the scoreboard's cases_file, and re-aggregates with
+    aggregate(). No LLM call, no API key, no network, no index. Never
+    writes anything.
+
+    This checks that the published metrics follow from the archived
+    answers under the current scorer. It does NOT regenerate the answers
+    themselves — those came from a real model run.
+
+    Returns 0 if every recomputed metric equals the stored one, 1 if any
+    differ (a difference means the scorer has changed since the run was
+    saved — report it, don't paper over it).
+    """
+    board = json.loads(board_path.read_text())
+    cases_path = ROOT / "evals" / board["cases_file"]
+    cases = {c["id"]: c for c in load_cases(cases_path)}
+    rows = []
+    for saved in board["cases"]:
+        case = cases[saved["id"]]
+        rows.append({
+            **saved,
+            "citation": score_citations(case, saved["citations"]),
+            "must_mention": score_must_mention(case, saved["answer"]),
+            "context": gold_in_context(case, saved["retrieved"]),
+        })
+    agg = aggregate(rows)
+
+    print(f"rescore: {board_path}")
+    print(f"  {len(rows)} archived cases, scored against "
+          f"evals/{board['cases_file']} — no LLM calls; this re-derives "
+          "the scoring, it does not regenerate the answers")
+    mismatches = []
+    print(f"  {'metric':<26} {'stored':>10} {'recomputed':>10}")
+    for key in sorted(set(board["metrics"]) | set(agg["metrics"])):
+        old = board["metrics"].get(key)
+        new = agg["metrics"].get(key)
+        flag = "" if old == new else "   <-- DIFFERS"
+        if flag:
+            mismatches.append(key)
+        print(f"  {key:<26} {str(old):>10} {str(new):>10}{flag}")
+    for cat in sorted(set(board["by_category"]) | set(agg["by_category"])):
+        if board["by_category"].get(cat) != agg["by_category"].get(cat):
+            mismatches.append(f"by_category:{cat}")
+            print(f"  by_category[{cat}] DIFFERS:\n"
+                  f"    stored:     {board['by_category'].get(cat)}\n"
+                  f"    recomputed: {agg['by_category'].get(cat)}")
+    if mismatches:
+        print(f"  MISMATCH in: {', '.join(mismatches)}")
+        return 1
+    print("  every stored metric reproduced exactly.")
+    return 0
+
+
 # ---------------------------------------------------------------------------
 # cost estimate
 # ---------------------------------------------------------------------------
@@ -259,6 +327,12 @@ def main() -> None:
                     help="offline: retrieval ceiling + cost estimate only")
     ap.add_argument("--fake", action="store_true",
                     help="offline plumbing smoke test with FakeLLM")
+    ap.add_argument("--rescore", metavar="SCOREBOARD",
+                    help="offline: re-run the scoring functions over the "
+                         "per-case rows archived in a saved scoreboard and "
+                         "compare with its stored metrics (no LLM, no key; "
+                         "exit 1 on any difference; writes nothing). "
+                         "Re-derives the scoring, not the answers.")
     ap.add_argument("--yes", action="store_true",
                     help="skip the pre-spend confirmation prompt")
     ap.add_argument("--agent", default="single", choices=["single", "tool"],
@@ -266,6 +340,9 @@ def main() -> None:
                          "ToolAgent (multi-step: the printed cost estimate "
                          "prices a 1-step run and is a LOWER BOUND)")
     args = ap.parse_args()
+
+    if args.rescore:
+        sys.exit(rescore(Path(args.rescore)))
 
     cases = load_cases(Path(args.cases))
     print(f"{len(cases)} cases from {args.cases}")
