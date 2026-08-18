@@ -1,5 +1,7 @@
 # OpenEdge Code-Intelligence Agent
 
+_Built by **Sharon Paul** · [github.com/SpSharon](https://github.com/SpSharon)_
+
 An agent that understands a legacy Progress 4GL / OpenEdge (ABL) codebase and
 answers plain-English questions about it with citations — and refuses to guess
 when the answer isn't in the retrieved code. Legacy 4GL is hard to navigate
