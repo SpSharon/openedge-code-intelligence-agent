@@ -375,7 +375,10 @@ fresh, sub-agent-verified set — a single-run figure, a favorable sample rather
 than a stable estimate; the same-day 3x re-run puts single-shot held-out at
 0.74–0.85, per the Stage 2 section above).
 Stage 3: tool-using agent — read-unit, walk-calls, search — built and
-measured. It delivers reliability where single-shot retrieval is incomplete
-(held-out) and nothing where it is already complete (dev); the
+measured — held-out answer correctness, citation recall, and citation
+precision all 1.000 across three independent runs, on the 9-case held-out
+set (8 answerable + 1 genuinely-unanswerable refusal case, refused correctly
+on all three runs). It delivers reliability where single-shot retrieval is
+incomplete (held-out) and nothing where it is already complete (dev); the
 originally-targeted call-graph case (C2) is unmoved. See the "Stage 3 — the
 tool-using agent" section above and `HANDOFF.md`.
