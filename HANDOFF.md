@@ -98,7 +98,7 @@ Tool-using agent (`openedge_agent/agent3.py`): tools `read_unit`, `walk_calls`,
 `search` over the Stage 1 index, an agent loop with a bounded step budget, the
 same answer/citation contract as Stage 2, scored via `--agent tool` with the
 frozen scorer unchanged. Designed and adversarially reviewed by Opus 5, built by
-Fable, verified by a fresh-context subagent (invariant `citations ⊆ read_set`,
+Claude Code, verified by a fresh-context subagent (invariant `citations ⊆ read_set`,
 26/26) and 98/98 tests.
 
 **Result** (same-day, model-held-constant, `claude-sonnet-4-5`, temp 0; held-out

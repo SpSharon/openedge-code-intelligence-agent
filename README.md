@@ -34,7 +34,7 @@ Two things are true and stated plainly:
 - **Human-directed, AI-implemented.** Sharon Paul specifies the requirements,
   directs the build, and verifies the results — including reading the
   generated ABL with a working knowledge of Progress 4GL. Implementation is by
-  Claude (Anthropic's Fable/Claude Code tooling). Verification additionally
+  Claude Code (Anthropic's AI coding agent). Verification additionally
   uses fresh-context AI review passes, and every reported retrieval number
   comes from an actual run of the scoreboard, never from self-assessment.
 
