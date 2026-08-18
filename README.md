@@ -211,7 +211,8 @@ structural: the citable set is the seed context plus whatever `read_unit` has
 read; `walk_calls` and `search` return no unit body and add nothing to it, so
 a unit outside that set cannot be cited — `citations ⊆ read_set` by
 construction, not by instruction
-(fuzz-verified: 1500 adversarial reply streams, 0 violations). The refusal
+(fuzz-verified by `tests/test_agent3_fuzz.py`, seeded and deterministic:
+1500 adversarial reply streams, 0 violations). The refusal
 contract and `parse_response` are Stage 2's, unchanged.
 
 ### Stage 3 score — a same-day, model-held-constant comparison
