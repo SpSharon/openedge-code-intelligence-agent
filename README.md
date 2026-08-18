@@ -357,9 +357,9 @@ evals/               frozen eval set + conventions + saved score reports
                      (the answer key lives here, never under corpus/)
 openedge_agent/      the Python package (abl, ingest, retrieve, score)
 tests/               stdlib unittest suite
-docs/                staged plan, Stage 1 brief, build memory
+docs/                build memory + the Stage 3 design doc
 index/               generated artifacts (gitignored; rebuilt by ingest)
-HANDOFF.md           state + exact next step for Stage 2
+HANDOFF.md           Stage 2 + Stage 3 state, verification, open next steps
 ```
 
 ## Roadmap

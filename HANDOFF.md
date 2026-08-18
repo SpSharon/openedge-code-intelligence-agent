@@ -1,4 +1,4 @@
-# HANDOFF — Stage 2 complete (built, independently verified, measured) (2026-07-19)
+# HANDOFF — Stages 2 & 3 complete (built, independently verified, measured) (Stage 2: 2026-07-19; Stage 3: 2026-07-26)
 
 ## State
 
