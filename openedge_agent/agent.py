@@ -33,7 +33,7 @@ import argparse
 import re
 from pathlib import Path
 
-from .llm import AnthropicLLM, FakeLLM
+from .llm import AnthropicLLM, FakeLLM, make_llm
 from .retrieve import Retriever
 
 REFUSAL_PHRASE = "not in the retrieved code"
@@ -146,7 +146,7 @@ class Agent:
     def __init__(self, index_dir: str | Path = "index", llm=None, k: int = 10,
                  max_answer_tokens: int = 700):
         self.retriever = Retriever(index_dir=index_dir)  # frozen Stage 1 defaults
-        self.llm = llm if llm is not None else AnthropicLLM()
+        self.llm = llm if llm is not None else make_llm()
         self.k = k
         self.max_answer_tokens = max_answer_tokens
 
@@ -223,7 +223,7 @@ def main() -> None:
             )
         llm = FakeLLM(scripted)
     else:
-        llm = AnthropicLLM()
+        llm = make_llm()
 
     agent = Agent(index_dir=args.index, llm=llm, k=args.k)
     out = agent.ask(args.question)

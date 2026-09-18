@@ -48,7 +48,7 @@ from .agent import (
     Agent,
     parse_response,
 )
-from .llm import AnthropicLLM, FakeLLM
+from .llm import AnthropicLLM, FakeLLM, make_llm
 
 __all__ = ["ToolAgent", "REFUSAL_PHRASE"]
 
@@ -625,7 +625,7 @@ def main() -> None:
                     f"unit [{first}].\nCITATIONS: {first}")
         llm = FakeLLM(scripted)
     else:
-        llm = AnthropicLLM()
+        llm = make_llm()
 
     agent = ToolAgent(index_dir=args.index, llm=llm, k=args.k,
                       max_steps=args.max_steps)

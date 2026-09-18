@@ -62,6 +62,7 @@ from openedge_agent.agent3 import ToolAgent  # noqa: E402
 from openedge_agent.llm import (  # noqa: E402
     AnthropicLLM,
     DEFAULT_MODEL,
+    make_llm,
     FakeLLM,
     approx_tokens,
     price_for,
@@ -357,7 +358,7 @@ def main() -> None:
     elif args.dry_run:
         llm = FakeLLM()  # never called
     else:
-        llm = AnthropicLLM(model=args.model)
+        llm = make_llm(model=args.model)
 
     agent_cls = ToolAgent if args.agent == "tool" else Agent
     agent = agent_cls(index_dir=args.index, llm=llm, k=args.k)
