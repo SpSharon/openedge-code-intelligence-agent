@@ -299,6 +299,44 @@ where retrieval is already complete; the originally-targeted dev call-graph case
   data, the refusal path guarded (red-then-green tests) — before these numbers.
   `docs/BUILD_MEMORY.md` carries the trail.
 
+### Running on Amazon Bedrock — the same model through a different route (18 Sep 2026)
+
+`OE_AGENT_BACKEND=bedrock`, with the Bedrock model id in `OE_BEDROCK_MODEL_ID`, sends the same
+prompts through Bedrock's Converse API. Nothing else in the agent changes; with the variable unset
+the Anthropic path and every archived scoreboard are untouched.
+
+Three held-out runs on `us.anthropic.claude-sonnet-4-5-20250929-v1:0` (us-east-1), same frozen
+9-case set, same tool agent, `k=10`, `max_steps=6`:
+
+| held-out, tool agent | Bedrock r1 / r2 / r3 | Anthropic API (archived) r1 / r2 / r3 |
+|---|---|---|
+| answer correctness | 0.889 / **1.000** / 0.889 | 1.000 / 1.000 / 1.000 |
+| citation recall | **1.000 / 1.000 / 1.000** | 1.000 / 1.000 / 1.000 |
+| citation precision | **1.000 / 1.000 / 1.000** | 1.000 / 1.000 / 1.000 |
+| invalid citations | 0 / 0 / 0 | 0 / 0 / 0 |
+| refusals (H9 only) | 0 / 1 / 0 | 1 / 1 / 1 |
+| metered cost per run | $0.27 / $0.30 / $0.27 | $0.27 |
+
+**Every difference is one case — H9, the refusal case, and the answers were not wrong.** In two of
+the three Bedrock runs the agent declined correctly and cited nothing, but worded it *"The retrieved
+code does not contain information about how cash receipts are applied…"*, while H9's `must_mention`
+rule requires the literal string `"not in the retrieved code"` — the same substring the `refusals`
+counter matches. The case therefore scored 0 and the run's correctness came out 0.889.
+
+**That is a property of the check, not of the answer.** Temperature is 0 and the phrasing still
+varied across runs, so a phrase-matched refusal test was never a reliable signal; the three archived
+Anthropic runs matching it 3/3 now reads as much as luck as behaviour. Citation integrity — the
+property this repository actually claims — held at 1.000/1.000 with zero invalid citations on every
+run, on both routes.
+
+**Open item, deliberately not acted on here:** recognising a refusal by the agent's own refusal path
+rather than by substring. Changing the measuring instrument in the same commit that reports the
+result it produced is exactly the tuning this project refuses to do; it belongs in its own change,
+with its reasoning written down.
+
+Scoreboards: `evals/results/answers_scoreboard_bedrock_stage3_heldout_r{1,2,3}.json`, re-derivable
+offline with `--rescore` like every other run.
+
 ## What Stage 1 contains
 
 | Piece | Where |

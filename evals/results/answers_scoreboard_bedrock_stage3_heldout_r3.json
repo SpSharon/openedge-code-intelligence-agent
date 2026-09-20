@@ -1,0 +1,1007 @@
+{
+ "run_at": "2026-09-19T02:33:11+00:00",
+ "kind": "answers",
+ "label": "bedrock_stage3_heldout_r3",
+ "cases_file": "answers_heldout.jsonl",
+ "llm": {
+  "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+  "calls": 13,
+  "input_tokens": 77270,
+  "output_tokens": 2634,
+  "tokens_estimated": false,
+  "estimated_cost_usd": 0.2713
+ },
+ "fake": false,
+ "params": {
+  "k": 10,
+  "retriever": "frozen Stage 1 defaults",
+  "agent": "tool",
+  "max_steps": 6
+ },
+ "cost_estimate_before_run": {
+  "model": "claude-sonnet-4-5",
+  "calls": 9,
+  "est_input_tokens": 43025,
+  "est_output_tokens": 3150,
+  "est_cost_usd": 0.1763,
+  "note": "chars/4 token estimate; actual metered usage is stamped into the scoreboard after the run"
+ },
+ "metrics": {
+  "citation_recall": 1.0,
+  "citation_precision": 1.0,
+  "answer_correctness": 0.8889,
+  "perfect_answer_cases": 8,
+  "gold_in_context_rate": 0.8462,
+  "refusals": 0,
+  "invalid_citation_total": 0,
+  "n_cases": 9,
+  "n_gold_targets": 13,
+  "n_citations_total": 16
+ },
+ "by_category": {
+  "call-graph": {
+   "cases": 1,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  },
+  "flow": {
+   "cases": 2,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  },
+  "legacy-pattern": {
+   "cases": 3,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  },
+  "refusal": {
+   "cases": 1,
+   "citation_recall": null,
+   "answer_correctness": 0.0
+  },
+  "schema": {
+   "cases": 1,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  },
+  "table-touch": {
+   "cases": 1,
+   "citation_recall": 1.0,
+   "answer_correctness": 1.0
+  }
+ },
+ "cases": [
+  {
+   "id": "H1",
+   "category": "schema",
+   "question": "Where are sales reps' monthly quotas kept, and how does the rep sales report pull out the right month's figure?",
+   "answer": "The sales reps' monthly quotas are kept in the SalesRep table, in the MonthQuota field, which is a decimal extent 12 array holding one quota value for each month (January through December). The rep sales report [corpus/rpt/rpt-repsales.p#main] pulls out the right month's figure by using the input parameter ip-month as an array subscript: it assigns `d-quota = SalesRep.MonthQuota[ip-month]`, where ip-month is an integer from 1 to 12 representing the month.",
+   "citations": [
+    "schema:SalesRep",
+    "corpus/rpt/rpt-repsales.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "schema:ArHist",
+    "schema:Order",
+    "schema:Customer",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-post.p#main",
+    "corpus/ar/ar-invoice.p#main",
+    "schema:SalesRep",
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "schema:next-ord-num"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": [
+     "corpus/rpt/rpt-repsales.p#main"
+    ]
+   },
+   "read": {
+    "schema:ArHist": {
+     "source": "seed",
+     "step": 0,
+     "chars": 551
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "schema:Customer": {
+     "source": "seed",
+     "step": 0,
+     "chars": 734
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "schema:SalesRep": {
+     "source": "seed",
+     "step": 0,
+     "chars": 294
+    },
+    "corpus/rpt/rpt-backord.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1567
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "schema:next-ord-num": {
+     "source": "seed",
+     "step": 0,
+     "chars": 270
+    },
+    "corpus/rpt/rpt-repsales.p#main": {
+     "source": "read_unit",
+     "step": 1,
+     "chars": 1762
+    }
+   },
+   "steps": 1,
+   "trace": [
+    {
+     "action": "tool",
+     "step": 1,
+     "tool": "read_unit",
+     "call": "read_unit corpus/rpt/rpt-repsales.p#main",
+     "ok": true
+    },
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "H2",
+   "category": "legacy-pattern",
+   "question": "The rep sales monthly report gets slow as invoice history grows - is there an indexing problem in how it selects the records?",
+   "answer": "The rep sales monthly report [corpus/rpt/rpt-repsales.p#main] has an indexing problem. The report selects ArHist records using `WHERE ArHist.SalesRep = SalesRep.SalesRep AND MONTH(ArHist.InvoiceDate) = ip-month AND YEAR(ArHist.InvoiceDate) = ip-year`. The MONTH() and YEAR() functions applied to InvoiceDate prevent the database from using the InvoiceDate index to bracket the query, forcing a full table scan of ArHist for each sales rep. The ArHist table [schema:ArHist] has indexes on SalesRep and InvoiceDate, but the function calls in the WHERE clause make the InvoiceDate index unusable. The code comment explicitly acknowledges this: \"TODO: the MONTH()/YEAR() functions in the WHERE keep the InvoiceDate index from bracketing, so this walks every ArHist row per rep.\"",
+   "citations": [
+    "corpus/rpt/rpt-repsales.p#main",
+    "schema:ArHist"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "schema:ArHist",
+    "schema:Order",
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Customer",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "schema:OrderLine",
+    "corpus/oe/oe-post.p#main",
+    "schema:next-inv-num",
+    "schema:SalesRep",
+    "corpus/rpt/rpt-backord.p#main"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 0,
+    "gold_absent": [
+     "corpus/rpt/rpt-repsales.p#main"
+    ]
+   },
+   "read": {
+    "schema:ArHist": {
+     "source": "seed",
+     "step": 0,
+     "chars": 551
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "schema:Customer": {
+     "source": "seed",
+     "step": 0,
+     "chars": 734
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "schema:next-inv-num": {
+     "source": "seed",
+     "step": 0,
+     "chars": 259
+    },
+    "schema:SalesRep": {
+     "source": "seed",
+     "step": 0,
+     "chars": 294
+    },
+    "corpus/rpt/rpt-backord.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1567
+    },
+    "corpus/rpt/rpt-repsales.p#main": {
+     "source": "read_unit",
+     "step": 1,
+     "chars": 1762
+    }
+   },
+   "steps": 1,
+   "trace": [
+    {
+     "action": "tool",
+     "step": 1,
+     "tool": "read_unit",
+     "call": "read_unit corpus/rpt/rpt-repsales.p",
+     "ok": true
+    },
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "H3",
+   "category": "call-graph",
+   "question": "Which program invokes deallocate-item in the allocation manager, and for which order lines does it get called?",
+   "answer": "I have enough information to answer this question from the retrieved units I've already read.\n\nThe program **oe/oe-cancel.p** invokes `deallocate-item` in the allocation manager [corpus/oe/oe-cancel.p#main]. It gets called for order lines that have `OrderLineStatus = {&LIN-ORDERED}` (the \"Ordered\" status). The code iterates through all OrderLines of the order being cancelled, and for each line in Ordered status, it runs `deallocate-item IN gh-alloc` passing the ItemNum and Qty to release the inventory allocation back to available stock [corpus/oe/oe-cancel.p#main]. Backordered lines are skipped because they were never allocated in the first place.",
+   "citations": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/inv/inv-alloc.p#deallocate-item",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-entry.p#add-order-line",
+    "corpus/oe/oe-entry.p#main",
+    "schema:Item",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/inv/inv-alloc.p#allocate-item"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/inv/inv-alloc.p#deallocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 530
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/oe/oe-entry.p#add-order-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1901
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "schema:Item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 693
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    },
+    "corpus/inv/inv-alloc.p#allocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1015
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "H4",
+   "category": "legacy-pattern",
+   "question": "Can individual installations hook their own custom logic into the nightly order posting run, and how does that mechanism work?",
+   "answer": "Looking at the retrieved code, I can see the answer in [corpus/oe/oe-post.p#main]. Let me verify I have all the information needed.\n\nThe code shows that after posting an order, there's a site-specific exit mechanism. The relevant section shows:\n\n1. A variable `c-exit-proc` is defined with initial value \"oe/oe-exit.p\"\n2. The code checks if this file exists using `SEARCH(c-exit-proc)`\n3. If found, it runs the procedure with `RUN VALUE(c-exit-proc) (INPUT Order.OrderNum)`\n4. The comments explicitly state this is \"Site-specific posting exit. Deliberately NOT in source control - each site drops its own oe/oe-exit.p on the PROPATH.\"\n\nThis fully answers the question. I don't need to read oe/oe-exit.p itself because the question asks about the mechanism, not what a specific exit does.\n\nYes, individual installations can hook custom logic into the nightly order posting run. The mechanism works through a site-specific exit procedure called \"oe/oe-exit.p\" [corpus/oe/oe-post.p#main]. After each order is posted and its status is set to Posted, the posting program checks whether a file named \"oe/oe-exit.p\" exists on the PROPATH using `SEARCH(c-exit-proc)`. If found, it runs that procedure with `RUN VALUE(c-exit-proc) (INPUT Order.OrderNum)`, passing the order number. The exit procedure runs inside the same transaction as the posting, so if it fails, the entire order posting (including the invoice creation and status change) rolls back together. The comments note this exit is \"deliberately NOT in source control - each site drops its own oe/oe-exit.p on the PROPATH.\"",
+   "citations": [
+    "corpus/oe/oe-post.p#main"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/ar/ar-invoice.p#main",
+    "schema:Order",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:ArHist",
+    "corpus/ar/ar-invoice.p#calc-order-total",
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-credit.p#get-open-balance"
+   ],
+   "citation": {
+    "n_gold": 1,
+    "n_gold_cited": 1,
+    "gold_missed": [],
+    "n_citations": 1,
+    "n_good_citations": 1,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 1,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    },
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "schema:ArHist": {
+     "source": "seed",
+     "step": 0,
+     "chars": 551
+    },
+    "corpus/ar/ar-invoice.p#calc-order-total": {
+     "source": "seed",
+     "step": 0,
+     "chars": 468
+    },
+    "corpus/include/ordstat.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 593
+    },
+    "corpus/oe/oe-credit.p#get-open-balance": {
+     "source": "seed",
+     "step": 0,
+     "chars": 698
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "H5",
+   "category": "flow",
+   "question": "I ran ship confirmation on an order, but the header is still Ordered - what can leave it that way?",
+   "answer": "Looking at the retrieved code, I can answer this question directly from [corpus/oe/oe-ship.p#main].\n\nThe ship confirmation procedure (oe-ship.p) marks the order header as Shipped only when no lines remain in Ordered or Backordered status. Specifically, after processing all lines, it checks:\n\n```\nIF NOT CAN-FIND(FIRST OrderLine OF Order\n                WHERE OrderLine.OrderLineStatus = {&LIN-ORDERED}\n                   OR OrderLine.OrderLineStatus = {&LIN-BACKORD})\n```\n\nIf this condition is false (meaning at least one line is still Ordered or Backordered), the header status update is skipped and the order remains \"Ordered\".\n\nLines can be left in Ordered status for two reasons shown in [corpus/oe/oe-ship.p#ship-line]:\n1. The Item record is locked (LOCKED(Item) returns true) - the line is skipped with a message \"Item X locked - line Y left open\"\n2. The Item record is missing (NOT AVAILABLE Item) - the line is skipped with a message \"Item X missing - line Y left open\"\n\nAdditionally, the main procedure only processes lines that are currently in Ordered status; any lines already in Backordered status are not touched by ship confirmation and will also prevent the header from becoming Shipped.",
+   "citations": [
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-ship.p#ship-line"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-ship.p#main",
+    "schema:Order",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/oe/oe-post.p#main",
+    "schema:OrderLine",
+    "corpus/rpt/rpt-backord.p#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/include/ordstat.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 593
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    },
+    "corpus/rpt/rpt-backord.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1567
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "H6",
+   "category": "legacy-pattern",
+   "question": "When the nightly post runs, does it also relieve inventory for the orders it posts?",
+   "answer": "Looking at the retrieved code, I can see that [corpus/oe/oe-post.p#main] is the nightly post procedure. Let me examine what it does regarding inventory relief.\n\nThe code shows a comment block from 04/17/2007 by dm stating \"inventory relief moved OUT to oe-ship.p\" and includes old commented-out code that used to relieve inventory. The comment explicitly says the old inventory relief code is \"kept for reference.\"\n\nThe actual active code in oe-post.p does NOT relieve inventory - it only:\n1. Validates order/line status\n2. Calls ar/ar-invoice.p to create invoices\n3. Changes Order.OrderStatus to Posted\n4. Runs an optional exit hook\n\nThe inventory relief now happens in [corpus/oe/oe-ship.p#ship-line], which is called during shipping (before posting). That procedure decrements Item.OnHand and Item.Allocated when lines are shipped.\n\nSo the answer is clear from the code and comments.\n\n**Answer:**\n\nNo, the nightly post does NOT relieve inventory. Inventory relief was moved out of oe-post.p to oe-ship.p in April 2007. The oe-post.p code contains commented-out inventory relief logic with a note \"pre-04/2007 inventory relief - kept for reference, dm\" and a history comment stating \"04/17/2007 dm - inventory relief moved OUT to oe-ship.p (old code left below for reference).\" The actual inventory relief now happens during shipping: oe-ship.p's ship-line procedure decrements Item.OnHand and Item.Allocated when it marks lines shipped. By the time oe-post.p runs nightly, the orders it processes are already in Shipped status and their inventory has already been relieved.",
+   "citations": [
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-ship.p#ship-line"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-post.p#main",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "schema:Order",
+    "schema:Item",
+    "corpus/include/ordstat.i",
+    "corpus/oe/oe-entry.p#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "schema:Item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 693
+    },
+    "corpus/include/ordstat.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 593
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "H7",
+   "category": "table-touch",
+   "question": "After an order line is created, which procedures can later change its line status, and what values do they set?",
+   "answer": "After an order line is created, three procedures can change its line status:\n\n1. **oe/oe-cancel.p** sets OrderLine.OrderLineStatus to \"Cancelled\" for all lines of an order being cancelled [corpus/oe/oe-cancel.p#main].\n\n2. **oe/oe-ship.p** (via its ship-line procedure) sets OrderLine.OrderLineStatus to \"Shipped\" when shipping allocated lines [corpus/oe/oe-ship.p#ship-line].\n\n3. The retrieved code does not show any procedure that sets the \"Backordered\" status after line creation, though this status value exists in the system [corpus/include/ordstat.i].",
+   "citations": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-ship.p#ship-line",
+    "corpus/include/ordstat.i"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-cancel.p#main",
+    "corpus/oe/oe-ship.p#main",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-entry.p#create-order-header",
+    "corpus/include/ordstat.i",
+    "schema:OrderLine",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "schema:Order",
+    "corpus/oe/oe-ship.p#ship-line"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 3,
+    "n_good_citations": 3,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 3,
+    "n_covered": 3,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "corpus/oe/oe-ship.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1810
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "corpus/oe/oe-entry.p#create-order-header": {
+     "source": "seed",
+     "step": 0,
+     "chars": 496
+    },
+    "corpus/include/ordstat.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 593
+    },
+    "schema:OrderLine": {
+     "source": "seed",
+     "step": 0,
+     "chars": 783
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-ship.p#ship-line": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1009
+    }
+   },
+   "steps": 1,
+   "trace": [
+    {
+     "action": "tool",
+     "step": 1,
+     "tool": "search",
+     "call": "search update OrderLine.OrderLineStatus assign status",
+     "ok": true
+    },
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "H8",
+   "category": "flow",
+   "question": "If a customer is only slightly over their credit limit, will order entry still decline the order?",
+   "answer": "I can answer this question from the retrieved code. The credit check procedure includes a tolerance that allows orders slightly over the credit limit.\n\nIn [corpus/oe/oe-credit.p#main], a variable `d-tolerance` is defined with an initial value of 100. The comment notes this was \"added after the Meyer's Hardware escalation. Do not remove.\"\n\nThe actual credit decision in [corpus/oe/oe-credit.p#check-credit] compares the customer's balance plus open order exposure against their credit limit **plus this tolerance**. The condition is:\n\n```\nIF sb-cust.Balance + get-open-balance() > sb-cust.CreditLimit + d-tolerance\n```\n\nThis means if a customer is within 100 (currency units) over their credit limit, the order will still be approved. Only if they exceed the limit by more than 100 will the order be declined.",
+   "citations": [
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-credit.p#check-credit"
+   ],
+   "invalid_citations": [],
+   "retrieved": [
+    "corpus/oe/oe-credit.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "schema:Customer",
+    "corpus/inv/inv-alloc.p#main",
+    "corpus/oe/oe-cancel.p#main",
+    "schema:Order",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/include/oeshared.i",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/rpt/rpt-backord.p#main"
+   ],
+   "citation": {
+    "n_gold": 2,
+    "n_gold_cited": 2,
+    "gold_missed": [],
+    "n_citations": 2,
+    "n_good_citations": 2,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 2,
+    "n_covered": 2,
+    "coverage": 1.0,
+    "missed": []
+   },
+   "context": {
+    "n_gold_in_context": 2,
+    "gold_absent": []
+   },
+   "read": {
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/oe/oe-credit.p#check-credit": {
+     "source": "seed",
+     "step": 0,
+     "chars": 554
+    },
+    "schema:Customer": {
+     "source": "seed",
+     "step": 0,
+     "chars": 734
+    },
+    "corpus/inv/inv-alloc.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 913
+    },
+    "corpus/oe/oe-cancel.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1784
+    },
+    "schema:Order": {
+     "source": "seed",
+     "step": 0,
+     "chars": 865
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/include/oeshared.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 619
+    },
+    "corpus/oe/oe-credit.p#get-open-balance": {
+     "source": "seed",
+     "step": 0,
+     "chars": 698
+    },
+    "corpus/rpt/rpt-backord.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1567
+    }
+   },
+   "steps": 0,
+   "trace": [
+    {
+     "action": "final"
+    }
+   ]
+  },
+  {
+   "id": "H9",
+   "category": "refusal",
+   "question": "How do cash receipts get applied to bring a customer's balance back down?",
+   "answer": "The retrieved code does not contain information about how cash receipts are processed or applied to customer balances. The comment in [corpus/ar/ar-invoice.p#main] states that \"cash receipts bring it down (that system lives in the GL package, not here)\" when explaining that Customer.Balance increases when invoices are created. However, no units from the GL package showing the actual cash receipt processing were retrieved.",
+   "citations": [],
+   "invalid_citations": [],
+   "retrieved": [
+    "schema:Customer",
+    "corpus/ar/ar-invoice.p#main",
+    "corpus/oe/oe-credit.p#check-credit",
+    "corpus/oe/oe-credit.p#get-open-balance",
+    "corpus/oe/oe-post.p#main",
+    "corpus/oe/oe-credit.p#main",
+    "corpus/include/oeshared.i",
+    "corpus/rpt/rpt-backord.p#main",
+    "corpus/oe/oe-entry.p#main",
+    "corpus/inv/inv-alloc.p#deallocate-item"
+   ],
+   "citation": {
+    "n_gold": 0,
+    "n_gold_cited": 0,
+    "gold_missed": [],
+    "n_citations": 0,
+    "n_good_citations": 0,
+    "bad_citations": []
+   },
+   "must_mention": {
+    "n_facts": 1,
+    "n_covered": 0,
+    "coverage": 0.0,
+    "missed": [
+     "declines because the answer is not in the retrieved code"
+    ]
+   },
+   "context": {
+    "n_gold_in_context": 0,
+    "gold_absent": []
+   },
+   "read": {
+    "schema:Customer": {
+     "source": "seed",
+     "step": 0,
+     "chars": 734
+    },
+    "corpus/ar/ar-invoice.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1815
+    },
+    "corpus/oe/oe-credit.p#check-credit": {
+     "source": "seed",
+     "step": 0,
+     "chars": 554
+    },
+    "corpus/oe/oe-credit.p#get-open-balance": {
+     "source": "seed",
+     "step": 0,
+     "chars": 698
+    },
+    "corpus/oe/oe-post.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 4351
+    },
+    "corpus/oe/oe-credit.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1274
+    },
+    "corpus/include/oeshared.i": {
+     "source": "seed",
+     "step": 0,
+     "chars": 619
+    },
+    "corpus/rpt/rpt-backord.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 1567
+    },
+    "corpus/oe/oe-entry.p#main": {
+     "source": "seed",
+     "step": 0,
+     "chars": 2312
+    },
+    "corpus/inv/inv-alloc.p#deallocate-item": {
+     "source": "seed",
+     "step": 0,
+     "chars": 530
+    }
+   },
+   "steps": 1,
+   "trace": [
+    {
+     "action": "tool",
+     "step": 1,
+     "tool": "search",
+     "call": "search cash receipt payment customer balance",
+     "ok": true
+    },
+    {
+     "action": "final"
+    }
+   ]
+  }
+ ]
+}
