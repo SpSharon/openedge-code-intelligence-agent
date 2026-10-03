@@ -6,6 +6,14 @@ import os
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 
+try:  # service deps are optional for the core suite (numpy only)
+    import fastapi, httpx  # noqa: F401
+except ImportError as exc:
+    raise unittest.SkipTest(
+        f"service tests need fastapi and httpx ({exc}); "
+        "pip install -r service/requirements.txt"
+    )
+
 from fastapi.testclient import TestClient
 
 from service.app import app
