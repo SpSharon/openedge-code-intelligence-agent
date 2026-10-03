@@ -1,0 +1,13 @@
+# What the service (service/) adds on top of the repository's requirements.txt.
+# Verified against exactly these versions on 2026-09-30 (Python 3.11.15):
+# the 13 service tests plus the existing 110 passed, and the server, CLI,
+# JSON Lines stream, fan-out and pipeline were run live. FastAPI >= 0.134 is
+# required for JSON Lines streaming from a route annotated Iterable[Model].
+# Python: pandas 3.x requires Python 3.11+, although the repository's
+# pyproject.toml allows 3.10+; use Python 3.11 or newer for the service.
+fastapi==0.140.0
+starlette==1.0.0
+pydantic==2.13.3
+uvicorn==0.46.0
+httpx==0.28.1
+pandas==3.0.2
