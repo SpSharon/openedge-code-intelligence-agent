@@ -369,7 +369,9 @@ python -m openedge_agent.score         # eval -> printed report + evals/results/
 python -m openedge_agent.score --all   # bm25 / embed / hybrid ablation
 python -m openedge_agent.retrieve "what calls ar-invoice.p?"   # ad-hoc query
 python -m unittest discover -s tests   # test suite (needs index/ — run the
-                                       #   ingest line above once, first)
+                                       #   ingest line above once, first);
+                                       #   with numpy only: 114 run, 4 skipped
+                                       #   (the service tests — see below)
 ```
 
 `python -m openedge_agent.score` with no flags reproduces the headline hybrid
@@ -397,6 +399,35 @@ Optional neural embeddings: `pip install sentence-transformers`, then re-run
 `ingest` and `score`; the backend recorded in the outputs will change from
 `lsa-numpy` to the model name.
 
+### The service — a FastAPI layer over the agent (optional)
+
+`service/` puts the Stage 3 agent behind a small HTTP API: `GET /health`, `POST /ask`, and
+`POST /ask/stream` (JSON Lines: the retrieved unit ids, then the answer), plus a command-line
+client, a scoreboard-to-CSV pipeline and a concurrent fan-out over the held-out questions.
+The agent itself is unchanged — the service builds one agent per request through the same
+`make_llm()` backends. Like the rest of the repository, Sharon Paul specified it, directed
+the AI coding agent that built it under a written brief, and verified the result, with an
+independent review. Requires Python ≥ 3.11 (pandas 3); use a virtual environment:
+
+```
+python -m venv .venv
+.venv\Scripts\activate                       # Windows; macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt -r service/requirements.txt
+python -m openedge_agent.ingest
+OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 123 tests, offline
+OE_AGENT_BACKEND=fake python -m uvicorn service.app:app       # then open http://127.0.0.1:8000/docs
+python -m service.cli ask "what calls ar-invoice.p?"           # in a second terminal
+python -m service.pipeline evals/results --out runs.csv        # every scoreboard -> one CSV
+python -m service.fanout --url http://127.0.0.1:8000 --cases evals/answers_heldout.jsonl --concurrency 3
+```
+
+(On PowerShell, set the backend with `$env:OE_AGENT_BACKEND = "fake"` first.) The `fake`
+backend answers offline with no key; `anthropic` and `bedrock` work as in the sections above.
+Errors are reported honestly: 422 for a bad request, 503 for a configuration problem (unknown
+backend, missing key or credentials), 500 for anything else. Known limits: an error from the
+live model API returns 500; a failure after streaming has started shows as a truncated 200;
+nothing here is deployed — it runs locally.
+
 ## Layout
 
 ```
@@ -405,7 +436,8 @@ corpus/              synthetic ABL codebase (PROPATH root; corpus/README.md
 evals/               frozen eval set + conventions + saved score reports
                      (the answer key lives here, never under corpus/)
 openedge_agent/      the Python package (abl, ingest, retrieve, score)
-tests/               stdlib unittest suite
+service/             optional FastAPI service, CLI, pipeline and fan-out over the agent
+tests/               stdlib unittest suite (service tests skip without the service's packages)
 docs/                build memory + the Stage 3 design doc
 index/               generated artifacts (gitignored; rebuilt by ingest)
 HANDOFF.md           Stage 2 + Stage 3 state, verification, open next steps
