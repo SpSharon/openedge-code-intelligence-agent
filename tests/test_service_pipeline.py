@@ -7,6 +7,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
+try:  # service deps are optional for the core suite (numpy only)
+    import pandas  # noqa: F401
+except ImportError as exc:
+    raise unittest.SkipTest(
+        f"service tests need pandas ({exc}); "
+        "pip install -r service/requirements.txt"
+    )
+
 from service.pipeline import cases_table, load_scoreboards, main, runs_table
 
 ROOT = Path(__file__).resolve().parent.parent

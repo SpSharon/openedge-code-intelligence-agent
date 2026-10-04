@@ -8,6 +8,14 @@ import types
 import unittest
 from unittest import mock
 
+try:  # service deps are optional for the core suite (numpy only)
+    import fastapi, httpx  # noqa: F401
+except ImportError as exc:
+    raise unittest.SkipTest(
+        f"service tests need fastapi and httpx ({exc}); "
+        "pip install -r service/requirements.txt"
+    )
+
 import httpx
 from fastapi.testclient import TestClient
 
