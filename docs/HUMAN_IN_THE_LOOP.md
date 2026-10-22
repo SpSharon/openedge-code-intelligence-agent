@@ -15,6 +15,7 @@ employer or client code, schema, or business logic appears anywhere in it.
 | The agent refuses rather than guesses | When the retrieved code does not contain the answer, it says so: `"not in the retrieved code"` | `openedge_agent/agent.py` — `REFUSAL_PHRASE`; `tests/test_agent.py` | Enforced by construction |
 | Autonomy is bounded, and the bound is stated to the model | A budget of **six tool executions** per question, with explicit stopping rules in the prompt and enforced by the loop | `openedge_agent/agent3.py` — `max_steps = 6` | Set deliberately, not by default |
 | Published metrics must be re-derivable by someone who does not trust the author | `python evals/answer_score.py --rescore <scoreboard.json>` re-derives every stored metric from the archived answers — **no API key, no network** | `evals/answer_score.py`; the archived scoreboards in `evals/results/` | Anyone |
+| The re-derivation must happen without anyone remembering to do it | On every push and pull request the workflow builds the index, runs the suite, and re-derives every archived answer scoreboard's stored aggregate metrics and the whole Stage 1 scoreboard; one stored metric that no longer follows from the archived evidence fails the run. The same check is in the test suite | `.github/workflows/verify.yml`; `evals/verify_archive.py`; `tests/test_verify_archive.py`; the badge in `README.md` | The workflow — it fails the run (a red check on the pull request; it blocks a merge only with branch protection) |
 
 ## What these controls do not do
 
@@ -30,6 +31,7 @@ employer or client code, schema, or business logic appears anywhere in it.
 ```
 python -m unittest discover -s tests          # offline; numpy is the only dependency
 python evals/answer_score.py --rescore evals/results/answers_scoreboard_stage3_heldout_r1.json
+python evals/verify_archive.py                # every archived scoreboard + the Stage 1 scoreboard, offline
 ```
 
 *Method: the system was specified and verified by the author; AI coding agents wrote the implementation.*

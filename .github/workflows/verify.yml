@@ -1,0 +1,53 @@
+# Every push and pull request: the offline suite, then every published number
+# re-derived from the archive. No API key, no network beyond pip, no model call —
+# a failing run means a published figure no longer follows from the evidence.
+name: verify
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: tests + archive (numpy only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install the core requirement
+        run: python -m pip install -r requirements.txt
+      - name: Build the index
+        run: python -m openedge_agent.ingest
+      - name: Unit tests (the service tests skip without the service's packages)
+        run: python -m unittest discover -s tests
+      - name: Re-derive every archived scoreboard, offline
+        run: python evals/verify_archive.py
+
+  optional:
+    name: tests with the optional packages (service; MCP server when present)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install the core and service requirements
+        run: python -m pip install -r requirements.txt -r service/requirements.txt
+      - name: Install the MCP server's requirement, if that package is in the tree
+        run: |
+          if [ -f mcp_server/requirements.txt ]; then
+            python -m pip install -r mcp_server/requirements.txt
+          else
+            echo "no mcp_server/ in this tree — its tests will skip"
+          fi
+      - name: Build the index
+        run: python -m openedge_agent.ingest
+      - name: Unit tests, optional packages included (fake backend — no key)
+        run: python -m unittest discover -s tests
+        env:
+          OE_AGENT_BACKEND: fake
