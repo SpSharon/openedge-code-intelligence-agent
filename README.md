@@ -405,7 +405,8 @@ python -m openedge_agent.score --all   # bm25 / embed / hybrid ablation
 python -m openedge_agent.retrieve "what calls ar-invoice.p?"   # ad-hoc query
 python -m unittest discover -s tests   # test suite (needs index/ — run the
                                        #   ingest line above once, first);
-                                       #   with numpy only: 118 run, 4 skipped
+                                       #   with numpy only: 153 run, 4 skipped
+                                       #   (a skipped module counts as one)
                                        #   (the service tests — see below)
 ```
 
@@ -449,7 +450,7 @@ python -m venv .venv
 .venv\Scripts\activate                       # Windows; macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt -r service/requirements.txt
 python -m openedge_agent.ingest
-OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 127 tests, offline
+OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 162 tests, offline (127 + the consumer's 35)
 OE_AGENT_BACKEND=fake python -m uvicorn service.app:app       # then open http://127.0.0.1:8000/docs
 python -m service.cli ask "what calls ar-invoice.p?"           # in a second terminal
 python -m service.pipeline evals/results --out runs.csv        # every scoreboard -> one CSV
@@ -463,6 +464,55 @@ backend, missing key or credentials), 500 for anything else. Known limits: an er
 live model API returns 500; a failure after streaming has started shows as a truncated 200;
 nothing here is deployed — it runs locally.
 
+### The event consumer — queue in, answers out, with the guarantees an integration worker needs (optional)
+
+`consumer/` is the shape of a worker on an event pipeline, runnable with no broker and no
+cloud account: question events come from a source with queue semantics, the worker answers
+each through the same Stage 3 agent, writes the answer to SQLite, and acknowledges — in that
+order. What it guarantees, and the test that proves each:
+
+| Guarantee | How | Drill (`tests/test_consumer.py`) |
+|---|---|---|
+| Idempotent on `event_id` | `INSERT OR IGNORE`; a redelivered event writes once | duplicate delivery → one row, one model call |
+| Commit after the write | the ack comes only after the SQLite write | the process "dies" between write and ack → redelivered → acked as a duplicate → still one row |
+| Transient failure | exponential backoff with jitter, bounded attempts, then dead-letter with the reason | downstream always fails → delays 0.5 s, 1 s, then dead letter after 3 attempts |
+| Poison message | a body that does not parse is dead-lettered at once, never retried | a non-JSON line → dead letter; the next event is processed |
+| Configuration is not a retry | a missing key, model id or package stops the run before the first fetch (exit 2); a permanent error from the agent — an `ImportError`, a 401/403/404 from the model API, a missing or rejected AWS credential — stops it, not retries it | no key → exit 2, nothing fetched, nothing written; `ImportError` or a 401 → the run stops after one call with the events still queued |
+| A broker error does not kill the loop | a failed ack, nack or dead-letter call is logged and counted; the event is redelivered and the store absorbs it on both paths — answers by event id, dead letters by event id or, for a poison message, by body | nack raises → logged, answered once after the timeout; dead-letter raises → one row, no extra model call, on both the poison and the exhausted paths |
+| Visibility timeout | the in-memory source hides a fetched event and redelivers it if not acked in time (SQS's model); a receive-count redrive dead-letters by itself, and the worker records that dead letter too | hidden until the timeout; attempt + 1 on redelivery; redriven after exactly the count, recorded in the store and the metrics |
+| Ordering | arrival order; a retried event comes back after its delay, behind what was visible by then | five events → five rows in order; with a backlog wider than the batch, the retried event lands last |
+| Observability | one JSON log line per outcome — event, receipt, attempt, the ids where the body parsed, duration where the model was called, reason where there is one — the same reason string in the log, the store and the source; counters for every outcome | the lines parse; the ids are there |
+
+The source is a protocol (`fetch`, `ack`, `nack`, `dead_letter`) — the seam where an SQS or
+Kafka client would go; none is included, and nothing here has run against either. `MemorySource`
+mirrors their semantics so the worker's guarantees are tested without infrastructure;
+`FileSource` loads a JSON Lines file into it (UTF-8; a byte-order mark is tolerated). Stdlib only
+(`sqlite3`, `json`, `logging`); no new dependency. Like the service, Sharon Paul specified it under
+a written brief, directed the AI coding agent that built it, and verified the result, with an
+two independent fresh-context reviews whose findings were applied (configuration errors were
+being retried; the redrive counted one attempt too many; the `refused` flag missed the real
+refusal contract; a BOM poisoned the first event; the ordering and observability claims were
+wider than the code; the dead-letter path was not idempotent on redelivery; a rejected key was
+retried per event).
+
+```
+python -m openedge_agent.ingest
+OE_AGENT_BACKEND=fake python -m unittest discover -s tests            # +35 consumer tests
+python -m consumer.run --input events.jsonl --db answers.sqlite --backend fake
+```
+
+Each line of `events.jsonl` is `{"event_id": "...", "question": "...", "correlation_id": "..."}`
+(`correlation_id` optional). Events are fetched one at a time by default (`--batch-size`), so the
+visibility timeout (`--visibility`, 30 s) applies per event. The run prints its metrics as one JSON
+object; exit 1 if anything was dead-lettered or redriven — those are in the database with their
+reasons; exit 2 for a configuration error, before anything is fetched. `anthropic` and `bedrock`
+work as everywhere else, with the keys from the environment. Known limits: no visibility extension
+(set `--visibility` above the agent's worst case — a tool-agent answer can take several model
+calls); a Bedrock credential failure surfaces on the first call, not at start-up; a refused answer
+is stored with `refused = 1` (the `fake` backend's default reply refuses every question). In the
+build environment (numpy only, no network) the suite ran 152 tests offline, 3 skipped — the
+service modules.
+
 ## Layout
 
 ```
@@ -473,6 +523,8 @@ evals/               frozen eval set + conventions + saved score reports
                      (the answer key lives here, never under corpus/)
 openedge_agent/      the Python package (abl, ingest, retrieve, score)
 service/             optional FastAPI service, CLI, pipeline and fan-out over the agent
+consumer/            optional event consumer over the agent: queue semantics, idempotent store,
+                     retries with backoff, dead letters, JSON log lines (no broker client included)
 tests/               stdlib unittest suite (service tests skip without the service's packages)
 docs/                build memory + the Stage 3 design doc
 index/               generated artifacts (gitignored; rebuilt by ingest)

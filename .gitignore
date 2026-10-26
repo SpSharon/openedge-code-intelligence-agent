@@ -19,3 +19,6 @@ index/
 .vscode/
 .idea/
 *.swp
+
+# consumer runs (python -m consumer.run)
+*.sqlite
