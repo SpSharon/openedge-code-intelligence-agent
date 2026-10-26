@@ -219,3 +219,22 @@
   tools convert an unreliable, over-refusing agent into a reliable one where
   retrieval falls short, and are net-neutral-to-negative where it doesn't; C2
   stays a citation-selection limit, reported unchanged, not tuned.
+
+- **An integration worker's guarantees are testable without the broker — and the
+  tests are the interview answer.** (consumer/, 2026-10-19) The seat this was
+  built for is an event pipeline (Kafka/SQS → Lambda or a listener → a database),
+  and the question asked of it was "a consumer that persists events — what do
+  you check?" The eight checks (cluster and access, topic, consumer group,
+  serialisation, offset policy with commit-after-write, idempotent writes,
+  failure paths, run-and-watch) are each either configuration the broker owns
+  or a behaviour the worker owns. The worker's half was built behind a
+  four-method protocol and an in-memory source that keeps the broker's
+  semantics (visibility timeout, at-least-once redelivery, receive-count
+  redrive), so every behaviour has a drill: duplicate delivery, a crash between
+  write and ack, downstream failure with backoff then dead letter, a poison
+  message, ordering. What is NOT claimed, on purpose: no SQS or Kafka client,
+  nothing run against either — the protocol is the seam and the README says so.
+  The lesson: say what the infrastructure owns and what the code owns, build
+  the code's half with the drills, and leave the broker's half to the day you
+  have one. A worker "tested against Kafka" with no Kafka would have been the
+  README-is-not-evidence mistake in a new coat.
