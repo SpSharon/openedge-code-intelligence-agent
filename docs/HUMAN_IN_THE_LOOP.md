@@ -24,6 +24,7 @@ employer or client code, schema, or business logic appears anywhere in it.
 | The guarantee is about **citation integrity, not correctness** | A citation being earned does not make the answer right. Answer quality is measured separately, by the evaluation harness |
 | `--rescore` proves the metrics, not the answers | It shows the published numbers follow from the archived answers. It says nothing about whether those answers were good — the README states the same boundary |
 | Nothing here has been audited by a third party | The evidence offered is the code, the tests, and the archived scoreboards |
+| The MCP server (`mcp_server/`) serves the tools, not the guarantee | It exposes `read_unit`, `walk_calls` and `search` to any MCP client, statelessly; the read-set invariant is enforced by the agent loop, so a client that reads one unit and cites another is outside this repository's guarantee |
 | The system does not run in production | No live users, no incident history, no operational controls beyond what is in this repository |
 
 ## Checking any row

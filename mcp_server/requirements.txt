@@ -1,0 +1,6 @@
+# What the MCP server (mcp_server/) adds on top of the repository's requirements.txt.
+# The official Model Context Protocol Python SDK, 2.x API (MCPServer; the 1.x
+# FastMCP name is gone in 2.x). Verified with mcp 2.3.0 on Python 3.13 (Linux)
+# on 2026-10-22: the 19 server tests passed and the server listed and served its
+# four tools to an in-memory client. Python 3.10 or newer.
+mcp>=2,<3
