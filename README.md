@@ -2,6 +2,8 @@
 
 _Built by **Sharon Paul** · [github.com/SpSharon](https://github.com/SpSharon)_
 
+[![verify](https://github.com/SpSharon/openedge-code-intelligence-agent/actions/workflows/verify.yml/badge.svg)](https://github.com/SpSharon/openedge-code-intelligence-agent/actions/workflows/verify.yml)
+
 An agent that understands a legacy Progress 4GL / OpenEdge (ABL) codebase and
 answers plain-English questions about it with citations — and refuses to guess
 when the answer isn't in the retrieved code. Legacy 4GL is hard to navigate
@@ -39,6 +41,39 @@ Two things are true and stated plainly:
   Claude Code (Anthropic's AI coding agent). Verification additionally
   uses fresh-context AI review passes, and every reported retrieval number
   comes from an actual run of the scoreboard, never from self-assessment.
+
+## Verified on every push
+
+A number that nobody re-derives is a sentence, not evidence. On every push and
+pull request, `.github/workflows/verify.yml` builds the index, runs the test
+suite, and then runs `evals/verify_archive.py`, which re-derives the archived
+scoreboards **offline** — no API key, no model call, nothing written:
+
+- every archived answer scoreboard in `evals/results/answers_scoreboard_*.json`
+  (the Stage 2, Stage 3 and Bedrock runs) is re-scored from its own archived
+  answers, and every stored aggregate metric (`metrics`, `by_category`) must
+  come out identical under the scorer at HEAD (`answer_score.py --rescore`,
+  applied to all thirteen);
+- the Stage 1 headline scoreboard (`evals/results/scoreboard_hybrid.json`) is
+  recomputed from the corpus with the shipped defaults, and everything in it
+  except the timestamp — metrics, per-category figures, parameters, backend,
+  every per-case rank — must be identical.
+
+The same check is a test (`tests/test_verify_archive.py`), so the suite fails
+when a stored metric stops following from the archived evidence; the badge
+above is the last run's result. What it proves is bounded, and stated: the
+stored metrics follow from the archived answers and the corpus. It does not
+regenerate the answers — those came from real, metered model runs, and
+reproducing *them* needs a key and is subject to the variance the Stage 3
+section describes — and it does not read this README: the figures quoted in
+prose here (tables, costs, token counts) are copied from the scoreboards by
+hand and are outside the check.
+
+```
+python evals/verify_archive.py             # both checks, from the repo root
+python evals/verify_archive.py --answers   # the thirteen archived answer scoreboards only
+python evals/verify_archive.py --stage1    # the Stage 1 scoreboard only (needs the shipped index/)
+```
 
 ## Stage 1 retrieval score
 
@@ -370,7 +405,7 @@ python -m openedge_agent.score --all   # bm25 / embed / hybrid ablation
 python -m openedge_agent.retrieve "what calls ar-invoice.p?"   # ad-hoc query
 python -m unittest discover -s tests   # test suite (needs index/ — run the
                                        #   ingest line above once, first);
-                                       #   with numpy only: 114 run, 4 skipped
+                                       #   with numpy only: 118 run, 4 skipped
                                        #   (the service tests — see below)
 ```
 
@@ -414,7 +449,7 @@ python -m venv .venv
 .venv\Scripts\activate                       # Windows; macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt -r service/requirements.txt
 python -m openedge_agent.ingest
-OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 123 tests, offline
+OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 127 tests, offline
 OE_AGENT_BACKEND=fake python -m uvicorn service.app:app       # then open http://127.0.0.1:8000/docs
 python -m service.cli ask "what calls ar-invoice.p?"           # in a second terminal
 python -m service.pipeline evals/results --out runs.csv        # every scoreboard -> one CSV
@@ -431,6 +466,7 @@ nothing here is deployed — it runs locally.
 ## Layout
 
 ```
+.github/workflows/   verify.yml — tests + the archived scoreboards re-derived, on every push
 corpus/              synthetic ABL codebase (PROPATH root; corpus/README.md
                      is meta-documentation and is NOT indexed)
 evals/               frozen eval set + conventions + saved score reports

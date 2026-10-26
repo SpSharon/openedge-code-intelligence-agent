@@ -105,7 +105,12 @@ def aggregate(details: list[dict], cases: list[dict]) -> dict:
 def run(mode: str, root: Path, name_bonus: float = 0.005, w_bm25: float = 1.5,
         w_embed: float = 1.0, rrf_k: int = 30, bm25_k1: float = 1.2,
         bm25_b: float = 0.3, graph_weight: float = 0.3,
-        touch_bonus: float = 0.04, label: str | None = None) -> dict:
+        touch_bonus: float = 0.04, label: str | None = None,
+        write: bool = True) -> dict:
+    """Score one retrieval configuration. With write=True (the default, and
+    the CLI's behaviour) the report is saved to evals/results/; write=False
+    only returns it (used by evals/verify_archive.py, which must never touch
+    the archive)."""
     cases = [
         json.loads(line)
         for line in (root / "evals/retrieval.jsonl").read_text().splitlines()
@@ -144,9 +149,10 @@ def run(mode: str, root: Path, name_bonus: float = 0.005, w_bm25: float = 1.5,
         **agg,
         "cases": details,
     }
-    out = root / "evals/results" / f"scoreboard_{label or mode}.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, indent=1))
+    if write:
+        out = root / "evals/results" / f"scoreboard_{label or mode}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(report, indent=1))
     return report
 
 
