@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "openedge-agent": {
+      "command": "python",
+      "args": ["-m", "mcp_server"]
+    }
+  }
+}

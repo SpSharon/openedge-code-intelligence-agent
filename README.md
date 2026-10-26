@@ -405,7 +405,7 @@ python -m openedge_agent.score --all   # bm25 / embed / hybrid ablation
 python -m openedge_agent.retrieve "what calls ar-invoice.p?"   # ad-hoc query
 python -m unittest discover -s tests   # test suite (needs index/ — run the
                                        #   ingest line above once, first);
-                                       #   with numpy only: 153 run, 4 skipped
+                                       #   with numpy only: 154 run, 5 skipped
                                        #   (a skipped module counts as one)
                                        #   (the service tests — see below)
 ```
@@ -435,6 +435,43 @@ Optional neural embeddings: `pip install sentence-transformers`, then re-run
 `ingest` and `score`; the backend recorded in the outputs will change from
 `lsa-numpy` to the model name.
 
+### The MCP server — the three tools, served to any MCP client (optional)
+
+`mcp_server/` exposes the Stage 3 agent's tools — `read_unit`, `walk_calls`, `search`, plus
+`list_units` (the server's own, to orient) — through the Model Context Protocol over stdio, so
+an MCP client such as Claude Code or Claude Desktop can call them directly. It imports
+`ToolAgent` and calls the same methods over the same frozen index; the agent is unchanged.
+`.mcp.json` at the repository root registers it for Claude Code at project scope: start `claude`
+in the repository root with the virtual environment active (the entry runs `python -m
+mcp_server`, which needs that working directory), approve the project server when Claude Code
+asks, and `/mcp` should then list it with its four tools.
+
+What it is not, stated plainly: it is not the agent. There is no model call, no loop, no budget
+and no answer in it — the client brings its own. The read-set guarantee (`citations ⊆ read_set`)
+is a property of the loop in `agent3.py`, not of the tools. The server is stateless — every call
+gets its own empty read set (parallel calls cannot see each other's), `read_unit` always returns
+the text, and `search` / `walk_calls` never return a unit body, the same shapes the loop sees —
+but what a client does with them is the client's. The agent's own loop still uses the text
+protocol (`TOOL:` lines) it was measured with; nothing here touches the archived numbers.
+
+```
+pip install -r mcp_server/requirements.txt    # the official MCP Python SDK, 2.x
+python -m openedge_agent.ingest               # the index, once
+python -m mcp_server                          # from the repository root; serves on stdio
+python mcp_server/server.py                   # the same, runnable from any directory (absolute path)
+                                              #   --index DIR or OE_AGENT_INDEX; default: this repo's index/
+python -m unittest tests.test_mcp_server      # 19 tests: an in-memory client (incl. forty parallel
+                                              #   calls), and the server started as a real subprocess
+```
+
+Claude Code: open `claude` in the repository root — `.mcp.json` registers the server — or
+`claude mcp add openedge-agent -- python -m mcp_server` from the same place. Claude Desktop (which
+does not start servers in the repository): under `mcpServers`, `command` = the absolute path of
+the virtual environment's `python`, `args` = `["<absolute path to>/mcp_server/server.py"]`; the
+script puts the repository on the import path and finds `index/` by its own location. Like the
+service, Sharon Paul specified it and directed the AI coding agent that built it; the tests above
+are the verification so far — the check inside Claude Code itself is hers to do and to record here.
+
 ### The service — a FastAPI layer over the agent (optional)
 
 `service/` puts the Stage 3 agent behind a small HTTP API: `GET /health`, `POST /ask`, and
@@ -450,7 +487,7 @@ python -m venv .venv
 .venv\Scripts\activate                       # Windows; macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt -r service/requirements.txt
 python -m openedge_agent.ingest
-OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 162 tests, offline (127 + the consumer's 35)
+OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 163 run, 1 skipped (the MCP tests, without their package); 181 with it
 OE_AGENT_BACKEND=fake python -m uvicorn service.app:app       # then open http://127.0.0.1:8000/docs
 python -m service.cli ask "what calls ar-invoice.p?"           # in a second terminal
 python -m service.pipeline evals/results --out runs.csv        # every scoreboard -> one CSV
@@ -525,7 +562,8 @@ openedge_agent/      the Python package (abl, ingest, retrieve, score)
 service/             optional FastAPI service, CLI, pipeline and fan-out over the agent
 consumer/            optional event consumer over the agent: queue semantics, idempotent store,
                      retries with backoff, dead letters, JSON log lines (no broker client included)
-tests/               stdlib unittest suite (service tests skip without the service's packages)
+mcp_server/          optional MCP server over the agent's tools (.mcp.json at the root registers it for Claude Code)
+tests/               stdlib unittest suite (the service and MCP tests skip without their packages)
 docs/                build memory + the Stage 3 design doc
 index/               generated artifacts (gitignored; rebuilt by ingest)
 HANDOFF.md           Stage 2 + Stage 3 state, verification, open next steps
