@@ -469,8 +469,10 @@ Claude Code: open `claude` in the repository root — `.mcp.json` registers the 
 does not start servers in the repository): under `mcpServers`, `command` = the absolute path of
 the virtual environment's `python`, `args` = `["<absolute path to>/mcp_server/server.py"]`; the
 script puts the repository on the import path and finds `index/` by its own location. Like the
-service, Sharon Paul specified it and directed the AI coding agent that built it; the tests above
-are the verification so far — the check inside Claude Code itself is hers to do and to record here.
+service, Sharon Paul specified it, directed the AI coding agent that built it, and verified it: the
+tests above, and on 26 Oct 2026 inside Claude Code itself — `/mcp` listed `openedge-agent` with its
+four tools, and each tool's answer was checked against the corpus (`list_units`, `walk_calls` in and
+out, `read_unit`; an unknown unit id came back `ok=false` with suggestions, nothing invented).
 
 ### The governed step in Camunda 7 — the agent as an approved, audited workflow step (optional)
 
