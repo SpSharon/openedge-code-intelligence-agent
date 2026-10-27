@@ -75,12 +75,20 @@ class StubAgent:
                 "citations": ["corpus/oe/oe-post.p#main"], "steps": 1}
 
 
-def make_worker(agent=None, *, clock=None, max_attempts=3,
+def mem_store(case: unittest.TestCase) -> AnswerStore:
+    """An in-memory store closed when the test ends (sqlite3 warns, from
+    Python 3.13, about a connection left for the garbage collector)."""
+    store = AnswerStore(":memory:")
+    case.addCleanup(store.close)
+    return store
+
+
+def make_worker(case, agent=None, *, clock=None, max_attempts=3,
                 visibility=30.0, max_receive_count=None, rand=lambda: 0.0):
     clock = clock or FakeClock()
     source = MemorySource(visibility_timeout=visibility,
                           max_receive_count=max_receive_count, clock=clock)
-    store = AnswerStore(":memory:")
+    store = mem_store(case)
     worker = Worker(agent or StubAgent(), source, store,
                     max_attempts=max_attempts,
                     backoff=Backoff(base=0.5, cap=8.0, jitter=0.25, rand=rand),
@@ -181,7 +189,7 @@ class TestMemorySource(unittest.TestCase):
 
 class TestWorkerDrills(unittest.TestCase):
     def test_duplicate_delivery_writes_once(self):
-        worker, source, store, _ = make_worker()
+        worker, source, store, _ = make_worker(self)
         source.put(GOOD)
         source.put(dict(GOOD))                        # the same event, delivered twice
         worker.run()
@@ -191,7 +199,7 @@ class TestWorkerDrills(unittest.TestCase):
         self.assertEqual(len(worker.agent.calls), 1)  # the model was asked once
 
     def test_crash_after_write_before_ack_is_safe(self):
-        worker, source, store, clock = make_worker(visibility=30)
+        worker, source, store, clock = make_worker(self, visibility=30)
         source.put(GOOD)
         real_ack = source.ack
         state = {"crashed": False}
@@ -215,7 +223,7 @@ class TestWorkerDrills(unittest.TestCase):
 
     def test_downstream_failure_retries_with_backoff_then_dead_letters(self):
         agent = StubAgent(fail_times=99)              # never recovers
-        worker, source, store, clock = make_worker(agent, max_attempts=3)
+        worker, source, store, clock = make_worker(self, agent, max_attempts=3)
         source.put(GOOD)
         delays = []
         real_nack = source.nack
@@ -241,7 +249,7 @@ class TestWorkerDrills(unittest.TestCase):
 
     def test_transient_failure_then_success(self):
         agent = StubAgent(fail_times=1)
-        worker, source, store, _ = make_worker(agent)
+        worker, source, store, _ = make_worker(self, agent)
         source.put(GOOD)
         worker.run()
         self.assertEqual(worker.metrics.retried, 1)
@@ -252,7 +260,7 @@ class TestWorkerDrills(unittest.TestCase):
         self.assertEqual(row["citations"], ["corpus/oe/oe-post.p#main"])
 
     def test_poison_message_dead_lettered_and_next_processed(self):
-        worker, source, store, _ = make_worker()
+        worker, source, store, _ = make_worker(self)
         source.put("this is not an event")
         source.put({"event_id": "evt-2", "question": "what does oe-post.p do?"})
         worker.run()
@@ -265,7 +273,7 @@ class TestWorkerDrills(unittest.TestCase):
         self.assertTrue(dl["reason"].startswith("malformed:"))
 
     def test_ordering_preserved(self):
-        worker, source, store, _ = make_worker()
+        worker, source, store, _ = make_worker(self)
         for i in range(5):
             source.put({"event_id": f"evt-{i}", "question": f"q{i}"})
         worker.run()
@@ -275,7 +283,7 @@ class TestWorkerDrills(unittest.TestCase):
 
     def test_log_lines_are_json_with_ids(self):
         agent = StubAgent(fail_times=1)
-        worker, source, store, _ = make_worker(agent)
+        worker, source, store, _ = make_worker(self, agent)
         source.put(GOOD)
         source.put("poison")
         with self.assertLogs("consumer", level="INFO") as captured:
@@ -296,7 +304,7 @@ class TestWorkerDrills(unittest.TestCase):
 
     def test_metrics_counts(self):
         agent = StubAgent(fail_times=1)
-        worker, source, store, _ = make_worker(agent)
+        worker, source, store, _ = make_worker(self, agent)
         source.put(GOOD)
         source.put(dict(GOOD))
         source.put("poison")
@@ -307,7 +315,7 @@ class TestWorkerDrills(unittest.TestCase):
 
     def test_run_sleeps_only_for_delayed_retries(self):
         agent = StubAgent(fail_times=1)
-        worker, source, store, clock = make_worker(agent)
+        worker, source, store, clock = make_worker(self, agent)
         source.put(GOOD)
         slept = []
         worker.sleep = lambda s: (slept.append(s), clock.advance(s))
@@ -322,14 +330,14 @@ class TestWorkerMore(unittest.TestCase):
             def ask(self, question):
                 return {"answer": "That is **not** in the retrieved code.",
                         "citations": [], "steps": 1}
-        worker, source, store, _ = make_worker(RefusingAgent())
+        worker, source, store, _ = make_worker(self, RefusingAgent())
         source.put(GOOD)
         worker.run()
         self.assertEqual(store.answer("evt-1")["refused"], 1)
 
     def test_permanent_error_stops_the_run_instead_of_retrying(self):
         agent = StubAgent(fail_times=99, exc=ImportError("No module named 'anthropic'"))
-        worker, source, store, _ = make_worker(agent)
+        worker, source, store, _ = make_worker(self, agent)
         source.put(GOOD)
         source.put({"event_id": "evt-2", "question": "q2"})
         with self.assertRaises(ImportError):
@@ -340,7 +348,7 @@ class TestWorkerMore(unittest.TestCase):
 
     def test_source_failure_is_logged_not_fatal(self):
         agent = StubAgent(fail_times=1)
-        worker, source, store, clock = make_worker(agent, visibility=5)
+        worker, source, store, clock = make_worker(self, agent, visibility=5)
         source.put(GOOD)
 
         def nack_that_fails(envelope, delay_seconds=0.0):
@@ -356,7 +364,7 @@ class TestWorkerMore(unittest.TestCase):
         self.assertEqual(store.counts()["answers"], 1)
 
     def test_race_inserted_elsewhere_counts_as_duplicate(self):
-        worker, source, store, _ = make_worker()
+        worker, source, store, _ = make_worker(self)
         source.put(GOOD)
         real_has = store.has
         store.has = lambda event_id: False            # the check says "new"...
@@ -371,7 +379,7 @@ class TestWorkerMore(unittest.TestCase):
         self.assertEqual(worker.metrics.processed, 0)
 
     def test_run_max_batches_stops_early(self):
-        worker, source, store, _ = make_worker()
+        worker, source, store, _ = make_worker(self)
         for i in range(3):
             source.put({"event_id": f"evt-{i}", "question": f"q{i}"})
         worker.batch_size = 1
@@ -382,7 +390,7 @@ class TestWorkerMore(unittest.TestCase):
     def test_source_redrive_is_recorded_in_store_and_metrics(self):
         clock = FakeClock()
         source = MemorySource(visibility_timeout=1, max_receive_count=2, clock=clock)
-        store = AnswerStore(":memory:")
+        store = mem_store(self)
 
         class Hanger:                                 # never returns a result
             def ask(self, question):
@@ -400,7 +408,7 @@ class TestWorkerMore(unittest.TestCase):
         self.assertEqual(dl["reason"], "max_receive_count exceeded")
 
     def test_failed_dead_letter_call_on_poison_is_absorbed_on_redelivery(self):
-        worker, source, store, clock = make_worker(visibility=5, max_receive_count=4)
+        worker, source, store, clock = make_worker(self, visibility=5, max_receive_count=4)
         source.put("poison")
         real_dl = source.dead_letter
         calls = {"n": 0}
@@ -423,7 +431,7 @@ class TestWorkerMore(unittest.TestCase):
 
     def test_failed_dead_letter_call_on_exhausted_retries_makes_no_extra_model_call(self):
         agent = StubAgent(fail_times=99)
-        worker, source, store, clock = make_worker(agent, max_attempts=3,
+        worker, source, store, clock = make_worker(self, agent, max_attempts=3,
                                                    visibility=5, max_receive_count=4)
         source.put(GOOD)
         real_dl = source.dead_letter
@@ -469,7 +477,7 @@ class TestWorkerMore(unittest.TestCase):
             self.assertFalse(is_permanent(exc), repr(exc))
         # and the worker stops on one instead of retrying
         agent = StubAgent(fail_times=99, exc=ApiError(401))
-        worker, source, store, _ = make_worker(agent)
+        worker, source, store, _ = make_worker(self, agent)
         source.put(GOOD)
         with self.assertRaises(ApiError):
             worker.run()
@@ -477,13 +485,13 @@ class TestWorkerMore(unittest.TestCase):
 
     def test_batch_size_and_visibility_are_validated(self):
         with self.assertRaises(ValueError):
-            Worker(StubAgent(), MemorySource(), AnswerStore(":memory:"), batch_size=0)
+            Worker(StubAgent(), MemorySource(), mem_store(self), batch_size=0)
         with self.assertRaises(ValueError):
             MemorySource(visibility_timeout=0)
 
     def test_retry_with_backlog_keeps_arrival_order_for_the_rest(self):
         agent = StubAgent(fail_times=1)               # the first event fails once
-        worker, source, store, _ = make_worker(agent)
+        worker, source, store, _ = make_worker(self, agent)
         worker.batch_size = 2
         for i in range(4):
             source.put({"event_id": f"evt-{i}", "question": f"q{i}"})
@@ -505,7 +513,7 @@ class TestBackoff(unittest.TestCase):
 
 class TestStore(unittest.TestCase):
     def test_insert_is_idempotent_on_event_id(self):
-        store = AnswerStore(":memory:")
+        store = mem_store(self)
         ev = parse_event(GOOD)
         self.assertTrue(store.insert_answer(ev, {"answer": "a", "citations": []},
                                             attempt=1, duration_ms=3))
@@ -516,7 +524,7 @@ class TestStore(unittest.TestCase):
         self.assertFalse(store.has("nope"))
 
     def test_refusal_is_flagged(self):
-        store = AnswerStore(":memory:")
+        store = mem_store(self)
         ev = parse_event(GOOD)
         store.insert_answer(ev, {"answer": "", "citations": []}, attempt=1,
                             duration_ms=1)
@@ -533,7 +541,7 @@ class TestFileSource(unittest.TestCase):
             clock = FakeClock()
             src = FileSource(p, clock=clock)
             self.assertEqual(src.pending(), 3)
-            worker = Worker(StubAgent(), src, AnswerStore(":memory:"),
+            worker = Worker(StubAgent(), src, mem_store(self),
                             clock=clock, sleep=clock.advance)
             m = worker.run()
             self.assertEqual((m.processed, m.malformed), (2, 1))
@@ -544,7 +552,7 @@ class TestFileSource(unittest.TestCase):
             p.write_bytes(b"\xef\xbb\xbf" + json.dumps(GOOD).encode("utf-8") + b"\r\n")
             clock = FakeClock()
             src = FileSource(p, clock=clock)
-            worker = Worker(StubAgent(), src, AnswerStore(":memory:"),
+            worker = Worker(StubAgent(), src, mem_store(self),
                             clock=clock, sleep=clock.advance)
             m = worker.run()
             self.assertEqual((m.processed, m.malformed), (1, 0))
@@ -565,7 +573,7 @@ class TestConsumerWithToolAgent(unittest.TestCase):
         reply = ("ar-invoice.p is called from the posting flow.\n"
                  "CITATIONS: corpus/oe/oe-post.p#main")
         agent = ToolAgent(index_dir="index", llm=FakeLLM([reply]), k=10)
-        worker, source, store, _ = make_worker(agent)
+        worker, source, store, _ = make_worker(self, agent)
         source.put(GOOD)
         worker.run()
         row = store.answer("evt-1")
@@ -599,9 +607,8 @@ class TestConsumerWithToolAgent(unittest.TestCase):
             self.assertEqual(code, 1)                 # one dead letter -> exit 1
             metrics = json.loads(buf.getvalue().strip().splitlines()[-1])
             self.assertEqual((metrics["processed"], metrics["malformed"]), (1, 1))
-            store = AnswerStore(db)
-            self.assertEqual(store.counts(), {"answers": 1, "dead_letters": 1})
-            store.close()
+            with AnswerStore(db) as store:        # closed even if the assertion fails (Windows: an open file blocks the cleanup)
+                self.assertEqual(store.counts(), {"answers": 1, "dead_letters": 1})
 
     def test_cli_stops_before_the_queue_when_the_backend_is_not_ready(self):
         from consumer.run import main
