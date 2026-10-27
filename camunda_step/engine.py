@@ -88,7 +88,10 @@ class Engine:
                 raw = resp.read()
                 status = resp.status
         except urllib.error.HTTPError as exc:
-            text = exc.read().decode("utf-8", "replace") if exc.fp else ""
+            try:                 # an HTTPError is also the open response: read the body, then close it
+                text = exc.read().decode("utf-8", "replace") if exc.fp else ""
+            finally:
+                exc.close()
             if exc.code in TRANSIENT_STATUSES:
                 raise EngineTransient(f"{exc.code} from {path}: {text[:200]}") from exc
             raise EngineError(exc.code, text, path) from exc
