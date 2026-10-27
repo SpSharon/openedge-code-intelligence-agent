@@ -24,6 +24,7 @@ employer or client code, schema, or business logic appears anywhere in it.
 | The guarantee is about **citation integrity, not correctness** | A citation being earned does not make the answer right. Answer quality is measured separately, by the evaluation harness |
 | `--rescore` proves the metrics, not the answers | It shows the published numbers follow from the archived answers. It says nothing about whether those answers were good — the README states the same boundary |
 | Nothing here has been audited by a third party | The evidence offered is the code, the tests, and the archived scoreboards |
+| The governed step (`camunda_step/`) is a demonstration on a local engine | The approval, the reject loop and the escalation timer are the engine's to run — the live run is pending (README); the worker's idempotency, retries and lock-keeping are tested against a fake engine. It runs on Camunda 7 Community in Docker with H2, one worker, one topic, no auth — the shape of a governed step, not an operated one |
 | The MCP server (`mcp_server/`) serves the tools, not the guarantee | It exposes `read_unit`, `walk_calls` and `search` to any MCP client, statelessly; the read-set invariant is enforced by the agent loop, so a client that reads one unit and cites another is outside this repository's guarantee |
 | The system does not run in production | No live users, no incident history, no operational controls beyond what is in this repository |
 

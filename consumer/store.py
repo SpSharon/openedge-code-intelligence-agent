@@ -62,6 +62,12 @@ class AnswerStore:
     def close(self) -> None:
         self.conn.close()
 
+    def __enter__(self) -> "AnswerStore":
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.close()
+
     # -- idempotency --
 
     def has(self, event_id: str) -> bool:

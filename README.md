@@ -405,7 +405,7 @@ python -m openedge_agent.score --all   # bm25 / embed / hybrid ablation
 python -m openedge_agent.retrieve "what calls ar-invoice.p?"   # ad-hoc query
 python -m unittest discover -s tests   # test suite (needs index/ — run the
                                        #   ingest line above once, first);
-                                       #   with numpy only: 154 run, 5 skipped
+                                       #   with numpy only: 188 run, 5 skipped
                                        #   (a skipped module counts as one)
                                        #   (the service tests — see below)
 ```
@@ -472,6 +472,62 @@ script puts the repository on the import path and finds `index/` by its own loca
 service, Sharon Paul specified it and directed the AI coding agent that built it; the tests above
 are the verification so far — the check inside Claude Code itself is hers to do and to record here.
 
+### The governed step in Camunda 7 — the agent as an approved, audited workflow step (optional)
+
+`camunda_step/` runs the agent as one step of a Camunda 7 process, the way a regulated
+workflow would run it: `governed-answer.bpmn` is start → an **external service task** `draft`
+(topic `draft-answer`; `asyncBefore` so the engine saves before the risky step, `asyncAfter` so
+the completion commits before the continuation runs and a bad timer duration becomes a job
+incident, not a retry loop) → a **user task** `review` whose form shows the draft on one line,
+its citations, the model id and the prompt version served (read-only) and asks for a decision →
+an **exclusive gateway** that publishes on *approve* and loops back to `draft` on *reject*, the
+reviewer's note travelling with it → and a **boundary timer** on the review that escalates after
+`${approvalTimeout}`, so an unreviewed draft is never published by default. `worker.py` is the
+external-task worker: it fetches and locks the task, asks the Stage 3 agent, and writes the
+audit record back as process variables — answer (and a one-line preview for the form), citations,
+whether it refused, model id, token counts, the prompt version asked for and the version served,
+a SHA-256 of the full answer, the attempt number, the worker and the time.
+`run.py` deploys the process, starts instances from the held-out questions, lists the waiting
+reviews and prints an instance's history (activities, who decided, the variables) from the
+API — the same facts Cockpit shows. `engine.py` is the REST client, standard library only.
+
+The three worker behaviours the bid names, each with a test that fails if it stops: **idempotency**
+— every completion is stored first, keyed by the external task id, and a task delivered twice is
+completed from the store with no second model call; **retries with backoff** — a transient
+failure (429, 5xx, a timeout, the model unreachable — the Anthropic SDK's and botocore's
+exception classes both) is reported with one retry fewer and a growing `retryTimeout`: retried
+twice, after 5 s and then 15 s, then the engine raises an incident for a person in Cockpit; a
+permanent failure (bad credentials, a bug) is an incident at once; **the lock** — a keep-alive
+thread extends it while a slow model call runs. The engine's String variables hold about 4,000
+characters, so a long answer is truncated at 3,900 and flagged, the hash covering the full text;
+the generated review form shows single-line fields, so the worker also writes a 600-character
+one-line preview for it and the full answer stays in the `answer` variable.
+
+```
+docker compose -f camunda_step/docker-compose.yml up -d   # Camunda 7.24 (the last Community release), H2, port 8080
+python -m openedge_agent.ingest                           # the index, once
+python -m camunda_step.run deploy                         # the BPMN (duplicate filtering on)
+python -m camunda_step.run start --instances 3 --timeout PT2M
+python -m camunda_step.worker                             # fake-demo: offline drafts with one citation; --backend anthropic for real ones
+#   then, in Tasklist (http://localhost:8080/camunda, demo / demo): approve one, reject one with a note, leave one
+python -m camunda_step.run tasks                          # the reviews waiting
+python -m camunda_step.run history <processInstanceId>    # what the engine remembers
+python -m unittest tests.test_camunda_step                # 34 tests: the worker against a fake engine, the BPMN's shape
+```
+
+What it is not: production. It runs against a local engine in Docker with H2; one worker, one
+topic; no priorities, no multi-topic polling, no auth on the REST calls (the local engine has
+none); the Databricks and React lines of the same bid are not here. Two things to know about the
+Tomcat distribution: a REST deployment is registered with the job executor in memory only, so
+after any engine restart run `python -m camunda_step.run deploy` again (duplicate filtering keeps
+the version; the registration is what you need) or new instances park on the first job and the
+timers never fire; and the worker's store lives under `index/`, so rebuilding the index from
+scratch also clears it. The tests prove the worker's behaviour against a fake engine and the
+process's shape by reading the XML; the live run — three instances through Tasklist, the history
+read in Cockpit — is the owner's check and is recorded here when she has done it. Sharon Paul
+specified it and directed the AI coding agent that built it; the 34 offline tests are the
+verification so far.
+
 ### The service — a FastAPI layer over the agent (optional)
 
 `service/` puts the Stage 3 agent behind a small HTTP API: `GET /health`, `POST /ask`, and
@@ -487,7 +543,7 @@ python -m venv .venv
 .venv\Scripts\activate                       # Windows; macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt -r service/requirements.txt
 python -m openedge_agent.ingest
-OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 163 run, 1 skipped (the MCP tests, without their package); 181 with it
+OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 197 run, 1 skipped (the MCP tests, without their package); 215 with it
 OE_AGENT_BACKEND=fake python -m uvicorn service.app:app       # then open http://127.0.0.1:8000/docs
 python -m service.cli ask "what calls ar-invoice.p?"           # in a second terminal
 python -m service.pipeline evals/results --out runs.csv        # every scoreboard -> one CSV
@@ -563,9 +619,10 @@ service/             optional FastAPI service, CLI, pipeline and fan-out over th
 consumer/            optional event consumer over the agent: queue semantics, idempotent store,
                      retries with backoff, dead letters, JSON log lines (no broker client included)
 mcp_server/          optional MCP server over the agent's tools (.mcp.json at the root registers it for Claude Code)
+camunda_step/        optional: the agent as a governed step in a Camunda 7 process — BPMN, external-task worker, runner
 tests/               stdlib unittest suite (the service and MCP tests skip without their packages)
 docs/                build memory + the Stage 3 design doc
-index/               generated artifacts (gitignored; rebuilt by ingest)
+index/               generated artifacts (gitignored; rebuilt by ingest; the Camunda worker's store lives here too)
 HANDOFF.md           Stage 2 + Stage 3 state, verification, open next steps
 ```
 

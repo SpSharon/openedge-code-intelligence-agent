@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  governed-answer — the model drafts, a person approves, the engine remembers.
+
+  Camunda 7 BPMN for the OpenEdge Code-Intelligence Agent (hand-written; opens in
+  Camunda Modeler). The shape: a question arrives; an EXTERNAL service task on
+  topic "draft-answer" (asyncBefore: a save point before the risky step) waits for
+  the worker in camunda_step/worker.py, which calls the agent and writes the answer,
+  its citations, the model id, token counts and the prompt version back as process
+  variables (asyncAfter: the completion commits before the continuation runs, so
+  a bad timer duration becomes a job incident, not a retry loop); a USER task shows
+  them to a reviewer — the generated form shows single-line fields, so the worker
+  also writes a one-line answer_preview; the full answer stays in the answer
+  variable — who approves or rejects with a note; an exclusive gateway publishes on approve and loops back to the draft on
+  reject (the note travels with it); a boundary timer on the review escalates
+  after ${approvalTimeout} (ISO-8601 duration, a start variable) so an unreviewed
+  draft is never published by default. Synthetic corpus; a local engine; nothing
+  deployed.
+-->
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="Definitions_governed_answer"
+                  targetNamespace="https://github.com/SpSharon/openedge-code-intelligence-agent"
+                  exporter="hand-written" exporterVersion="2026-10-22">
+
+  <bpmn:process id="governed-answer" name="Governed answer: the model drafts, a person approves"
+                isExecutable="true" camunda:historyTimeToLive="30">
+
+    <bpmn:startEvent id="start" name="Question received">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="question" label="Question for the agent" type="string"
+                             defaultValue="what calls ar-invoice.p?">
+            <camunda:validation><camunda:constraint name="required" /></camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="prompt_version" label="Prompt version to use" type="string"
+                             defaultValue="agent3-2026-07-26">
+            <camunda:validation><camunda:constraint name="required" /></camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="approvalTimeout" label="Review must finish within (ISO-8601 duration)"
+                             type="string" defaultValue="PT10M">
+            <camunda:validation><camunda:constraint name="required" /></camunda:validation>
+          </camunda:formField>
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>flow_start_draft</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:serviceTask id="draft" name="Draft the answer (external worker)"
+                      camunda:type="external" camunda:topic="draft-answer"
+                      camunda:asyncBefore="true" camunda:asyncAfter="true">
+      <bpmn:incoming>flow_start_draft</bpmn:incoming>
+      <bpmn:incoming>flow_reject_draft</bpmn:incoming>
+      <bpmn:outgoing>flow_draft_review</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:userTask id="review" name="Review the draft" camunda:assignee="demo"
+                   camunda:candidateGroups="reviewers">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="answer_preview" label="Draft answer (one line; the full text is the answer variable)" type="string">
+            <camunda:validation><camunda:constraint name="readonly" /></camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="citations" label="Citations (unit ids the answer cites; each was read)" type="string">
+            <camunda:validation><camunda:constraint name="readonly" /></camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="model_id" label="Model" type="string">
+            <camunda:validation><camunda:constraint name="readonly" /></camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="prompt_version_served" label="Prompt version served" type="string">
+            <camunda:validation><camunda:constraint name="readonly" /></camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="decision" label="Decision" type="enum">
+            <camunda:value id="approve" name="Approve: publish this answer" />
+            <camunda:value id="reject" name="Reject: send back to the model with my note" />
+            <camunda:validation><camunda:constraint name="required" /></camunda:validation>
+          </camunda:formField>
+          <camunda:formField id="reviewer_note" label="Reviewer note (travels with a rejection)" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>flow_draft_review</bpmn:incoming>
+      <bpmn:outgoing>flow_review_gateway</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:boundaryEvent id="review_timeout" name="Not reviewed in time" attachedToRef="review"
+                        cancelActivity="true">
+      <bpmn:outgoing>flow_timeout_escalated</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="review_timer">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">${approvalTimeout}</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+
+    <bpmn:exclusiveGateway id="decision_gateway" name="Approved?" default="flow_reject_draft">
+      <bpmn:incoming>flow_review_gateway</bpmn:incoming>
+      <bpmn:outgoing>flow_approve_published</bpmn:outgoing>
+      <bpmn:outgoing>flow_reject_draft</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:endEvent id="published" name="Published">
+      <bpmn:incoming>flow_approve_published</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="escalated" name="Escalated: not published">
+      <bpmn:incoming>flow_timeout_escalated</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="flow_start_draft" sourceRef="start" targetRef="draft" />
+    <bpmn:sequenceFlow id="flow_draft_review" sourceRef="draft" targetRef="review" />
+    <bpmn:sequenceFlow id="flow_review_gateway" sourceRef="review" targetRef="decision_gateway" />
+    <bpmn:sequenceFlow id="flow_approve_published" name="approve" sourceRef="decision_gateway" targetRef="published">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${execution.getVariable('decision') == 'approve'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_reject_draft" name="reject, with the note" sourceRef="decision_gateway" targetRef="draft" />
+    <bpmn:sequenceFlow id="flow_timeout_escalated" sourceRef="review_timeout" targetRef="escalated" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="Diagram_governed_answer">
+    <bpmndi:BPMNPlane id="Plane_governed_answer" bpmnElement="governed-answer">
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
+        <dc:Bounds x="160" y="182" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="draft_di" bpmnElement="draft">
+        <dc:Bounds x="260" y="160" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="review_di" bpmnElement="review">
+        <dc:Bounds x="470" y="160" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="review_timeout_di" bpmnElement="review_timeout">
+        <dc:Bounds x="562" y="222" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="decision_gateway_di" bpmnElement="decision_gateway" isMarkerVisible="true">
+        <dc:Bounds x="680" y="175" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="published_di" bpmnElement="published">
+        <dc:Bounds x="800" y="182" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="escalated_di" bpmnElement="escalated">
+        <dc:Bounds x="800" y="322" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_start_draft_di" bpmnElement="flow_start_draft">
+        <di:waypoint x="196" y="200" />
+        <di:waypoint x="260" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_draft_review_di" bpmnElement="flow_draft_review">
+        <di:waypoint x="400" y="200" />
+        <di:waypoint x="470" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_review_gateway_di" bpmnElement="flow_review_gateway">
+        <di:waypoint x="610" y="200" />
+        <di:waypoint x="680" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_approve_published_di" bpmnElement="flow_approve_published">
+        <di:waypoint x="730" y="200" />
+        <di:waypoint x="800" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_reject_draft_di" bpmnElement="flow_reject_draft">
+        <di:waypoint x="705" y="175" />
+        <di:waypoint x="705" y="90" />
+        <di:waypoint x="330" y="90" />
+        <di:waypoint x="330" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_timeout_escalated_di" bpmnElement="flow_timeout_escalated">
+        <di:waypoint x="580" y="258" />
+        <di:waypoint x="580" y="340" />
+        <di:waypoint x="800" y="340" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
