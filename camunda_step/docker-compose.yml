@@ -1,0 +1,17 @@
+# Camunda 7 Community Edition, the last release (7.24, 14 Oct 2025), on your laptop:
+#   docker compose -f camunda_step/docker-compose.yml up -d
+#   web apps: http://localhost:8080/camunda  (demo / demo)   REST: http://localhost:8080/engine-rest
+# H2 in the container; nothing persists past `down -v`. A local engine, nothing deployed anywhere.
+services:
+  camunda:
+    image: camunda/camunda-bpm-platform:7.24.0
+    container_name: camunda7
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=America/New_York
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/engine-rest/engine || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
