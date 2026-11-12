@@ -12,6 +12,7 @@ from openedge_agent.llm import (
     AnthropicLLM,
     BedrockLLM,
     DEFAULT_MODEL,
+    FALLBACK_MODEL,
     FakeLLM,
     make_llm,
     price_for,
@@ -89,6 +90,30 @@ class BedrockMetering(unittest.TestCase):
 
     def test_bedrock_model_id_prices_as_sonnet(self):
         self.assertEqual(price_for(MODEL_ID), price_for("claude-sonnet-4-5"))
+
+
+class DefaultModel(unittest.TestCase):
+    """The default moved to claude-sonnet-5-5 (Sonnet 4.5 retires 30 Nov
+    2026). The archived Sonnet 4.5 scoreboards keep their own stamped model
+    and price; only the fallback and the price table changed."""
+
+    def test_fallback_is_the_replacement_model(self):
+        self.assertEqual(FALLBACK_MODEL, "claude-sonnet-5-5")
+        # DEFAULT_MODEL is the fallback unless OE_AGENT_MODEL was set when the
+        # module was imported — either way it is what AnthropicLLM() uses.
+        self.assertIn(DEFAULT_MODEL,
+                      {FALLBACK_MODEL, os.environ.get("OE_AGENT_MODEL")})
+        self.assertEqual(AnthropicLLM().model, DEFAULT_MODEL)
+        self.assertEqual(AnthropicLLM(model="claude-haiku-5-5").model,
+                         "claude-haiku-5-5")
+
+    def test_sonnet_5_prices_before_the_older_sonnet_row(self):
+        self.assertEqual(price_for("claude-sonnet-5-5"), (2.0, 10.0))
+        self.assertEqual(price_for("us.anthropic.claude-sonnet-5-5-v1:0"),
+                         (2.0, 10.0))
+        # the archived runs' model keeps the price it was metered at
+        self.assertEqual(price_for("claude-sonnet-4-5"), (3.0, 15.0))
+        self.assertEqual(price_for(MODEL_ID), (3.0, 15.0))
 
 
 class BedrockGuards(unittest.TestCase):

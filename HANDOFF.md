@@ -24,7 +24,9 @@ exists:
   `citations`. Refusal contract: "not in the retrieved code".
 - `openedge_agent/llm.py` — pluggable client (ChurchReach pattern):
   `AnthropicLLM` (key from env only; model via `OE_AGENT_MODEL`, default
-  claude-sonnet-4-5), scripted `FakeLLM`, shared `Meter` stamped into every
+  claude-sonnet-4-5 at the time of these runs — claude-sonnet-5-5 since the
+  change of default, Sonnet 4.5 retiring 30 Nov 2026; see the README's "The
+  model" note), scripted `FakeLLM`, shared `Meter` stamped into every
   scoreboard.
 - `evals/answers.jsonl` — the frozen 20 questions; gold/acceptable identical
   to `retrieval.jsonl` (test-enforced); per-case `must_mention` any-of regex
