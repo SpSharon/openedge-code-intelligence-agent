@@ -1,6 +1,6 @@
 # OpenEdge Code-Intelligence Agent
 
-_Built by **Sharon Paul** · [github.com/SpSharon](https://github.com/SpSharon)_
+_**Sharon Paul** — specified, directed and verified · implemented by Claude Code under her brief · [github.com/SpSharon](https://github.com/SpSharon)_
 
 [![verify](https://github.com/SpSharon/openedge-code-intelligence-agent/actions/workflows/verify.yml/badge.svg)](https://github.com/SpSharon/openedge-code-intelligence-agent/actions/workflows/verify.yml)
 
@@ -264,7 +264,7 @@ Held-out (9 cases = 8 answerable + 1 genuinely-unanswerable refusal), 3 runs eac
 | answer correctness | 0.815 / 0.852 / 0.741 | **1.000 / 1.000 / 1.000** |
 | citation recall | 0.769 / 0.846 / 0.846 | **1.000 / 1.000 / 1.000** |
 | citation precision | 0.857 / 0.867 / 0.867 | **1.000 / 1.000 / 1.000** |
-| refusals | 4 / 4 / 2 — all on *answerable* cases | **1 / 1 / 1 — only the unanswerable one** |
+| refusals | 4 / 4 / 2 — of them 3 / 3 / 2 on *answerable* cases (H1, H2, H7 · H1, H2, H7 · H1, H2); the fourth in runs 1 and 2 is H9, refused in words but still citing two units | **1 / 1 / 1 — only the unanswerable one, citing nothing** |
 | invalid citations | 0 | 0 |
 
 Dev (20 cases; retrieval already at ceiling 1.000), 1 run each:
@@ -283,9 +283,13 @@ The result is **reliability where retrieval falls short**, and it is one-sided b
 
 - **Where retrieval is incomplete (held-out), the tools matter — a lot.** The
   single-shot agent is *unstable* on held-out: correctness swings 0.74–0.85
-  across three runs, it spuriously refuses two-to-four of the eight answerable
-  questions each run, and it answers the one genuinely-unanswerable question (H9)
-  *with* citations instead of refusing. The tool agent is stable and correct —
+  across three runs, it spuriously refuses two or three of the eight answerable
+  questions each run (H1 and H2 every time, H7 twice), and it never handles the
+  one genuinely-unanswerable question (H9) cleanly — in two runs it says the
+  answer is not in the retrieved code yet still cites two units (the contract
+  says cite nothing), and in the third it words the absence in a way the
+  phrase-matched check does not recognise and scores 0 on it (the instrument
+  limit the Bedrock section describes). The tool agent is stable and correct —
   1.000 correctness, recall, and precision on all three runs, refusing only H9,
   cleanly, with zero hallucinated citations. Three runs each is what earns the
   word "stable": the single-shot is chronically variable, the tool agent isn't.
@@ -334,7 +338,7 @@ where retrieval is already complete; the originally-targeted dev call-graph case
   data, the refusal path guarded (red-then-green tests) — before these numbers.
   `docs/BUILD_MEMORY.md` carries the trail.
 
-### Running on Amazon Bedrock — the same model through a different route (18 Sep 2026)
+### Running on Amazon Bedrock — the same model through a different route (18 Sep 2026, US Eastern; the scoreboards are stamped 19 Sep UTC)
 
 `OE_AGENT_BACKEND=bedrock`, with the Bedrock model id in `OE_BEDROCK_MODEL_ID`, sends the same
 prompts through Bedrock's Converse API. Nothing else in the agent changes; with the variable unset
@@ -350,7 +354,7 @@ Three held-out runs on `us.anthropic.claude-sonnet-4-5-20250929-v1:0` (us-east-1
 | citation precision | **1.000 / 1.000 / 1.000** | 1.000 / 1.000 / 1.000 |
 | invalid citations | 0 / 0 / 0 | 0 / 0 / 0 |
 | refusals (H9 only) | 0 / 1 / 0 | 1 / 1 / 1 |
-| metered cost per run | $0.27 / $0.30 / $0.27 | $0.27 |
+| cost per run (metered tokens × list price) | $0.27 / $0.30 / $0.27 | $0.27 / $0.32 / $0.30 |
 
 **Every difference is one case — H9, the refusal case, and the answers were not wrong.** In two of
 the three Bedrock runs the agent declined correctly and cited nothing, but worded it *"The retrieved
@@ -395,8 +399,8 @@ Stage 2 adds:
 
 ## Running it
 
-Requires Python ≥ 3.10 and numpy (`pip install -r requirements.txt`). No
-install step — run from the repo root:
+Requires Python ≥ 3.11 (the pinned numpy supports 3.11–3.14; the CI runs 3.11) and numpy
+(`pip install -r requirements.txt`). No install step — run from the repo root:
 
 ```
 python -m openedge_agent.ingest        # corpus -> index/  (~1s)
@@ -414,7 +418,8 @@ python -m unittest discover -s tests   # test suite (needs index/ — run the
 row above (deterministic on the same machine/numpy).
 
 Stage 2 (offline parts need nothing extra; real answers need
-`pip install anthropic` + `ANTHROPIC_API_KEY` as an env var):
+`pip install anthropic` + `ANTHROPIC_API_KEY` as an env var; the Bedrock route needs
+`pip install boto3` and AWS credentials instead):
 
 ```
 python evals/answer_score.py --dry-run          # offline: ceiling + cost estimate
@@ -583,7 +588,7 @@ Kafka client would go; none is included, and nothing here has run against either
 mirrors their semantics so the worker's guarantees are tested without infrastructure;
 `FileSource` loads a JSON Lines file into it (UTF-8; a byte-order mark is tolerated). Stdlib only
 (`sqlite3`, `json`, `logging`); no new dependency. Like the service, Sharon Paul specified it under
-a written brief, directed the AI coding agent that built it, and verified the result, with an
+a written brief, directed the AI coding agent that built it, and verified the result, with
 two independent fresh-context reviews whose findings were applied (configuration errors were
 being retried; the redrive counted one attempt too many; the `refused` flag missed the real
 refusal contract; a BOM poisoned the first event; the ordering and observability claims were
@@ -604,9 +609,8 @@ reasons; exit 2 for a configuration error, before anything is fetched. `anthropi
 work as everywhere else, with the keys from the environment. Known limits: no visibility extension
 (set `--visibility` above the agent's worst case — a tool-agent answer can take several model
 calls); a Bedrock credential failure surfaces on the first call, not at start-up; a refused answer
-is stored with `refused = 1` (the `fake` backend's default reply refuses every question). In the
-build environment (numpy only, no network) the suite ran 152 tests offline, 3 skipped — the
-service modules.
+is stored with `refused = 1` (the `fake` backend's default reply refuses every question). The test
+counts for the whole suite are under *Running it* and *The service*.
 
 ## Layout
 
@@ -616,14 +620,14 @@ corpus/              synthetic ABL codebase (PROPATH root; corpus/README.md
                      is meta-documentation and is NOT indexed)
 evals/               frozen eval set + conventions + saved score reports
                      (the answer key lives here, never under corpus/)
-openedge_agent/      the Python package (abl, ingest, retrieve, score)
+openedge_agent/      the Python package (abl, ingest, retrieve, score; agent, agent3, llm)
 service/             optional FastAPI service, CLI, pipeline and fan-out over the agent
 consumer/            optional event consumer over the agent: queue semantics, idempotent store,
                      retries with backoff, dead letters, JSON log lines (no broker client included)
 mcp_server/          optional MCP server over the agent's tools (.mcp.json at the root registers it for Claude Code)
 camunda_step/        optional: the agent as a governed step in a Camunda 7 process — BPMN, external-task worker, runner
 tests/               stdlib unittest suite (the service and MCP tests skip without their packages)
-docs/                build memory + the Stage 3 design doc
+docs/                build memory, the Stage 3 design doc, the human-in-the-loop controls table
 index/               generated artifacts (gitignored; rebuilt by ingest; the Camunda worker's store lives here too)
 HANDOFF.md           Stage 2 + Stage 3 state, verification, open next steps
 ```

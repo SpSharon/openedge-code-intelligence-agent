@@ -22,3 +22,9 @@ index/
 
 # consumer runs (python -m consumer.run)
 *.sqlite
+
+# Claude Code's per-machine settings (written when the project MCP server is approved)
+.claude/settings.local.json
+
+# service/pipeline output (python -m service.pipeline evals/results --out runs.csv)
+/runs.csv

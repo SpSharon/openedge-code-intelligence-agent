@@ -29,7 +29,7 @@ jobs:
         run: python evals/verify_archive.py
 
   optional:
-    name: tests with the optional packages (service; MCP server when present)
+    name: tests with the optional packages (service + MCP server)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -38,13 +38,8 @@ jobs:
           python-version: "3.11"
       - name: Install the core and service requirements
         run: python -m pip install -r requirements.txt -r service/requirements.txt
-      - name: Install the MCP server's requirement, if that package is in the tree
-        run: |
-          if [ -f mcp_server/requirements.txt ]; then
-            python -m pip install -r mcp_server/requirements.txt
-          else
-            echo "no mcp_server/ in this tree — its tests will skip"
-          fi
+      - name: Install the MCP server's requirement
+        run: python -m pip install -r mcp_server/requirements.txt
       - name: Build the index
         run: python -m openedge_agent.ingest
       - name: Unit tests, optional packages included (fake backend — no key)
