@@ -27,12 +27,23 @@ from __future__ import annotations
 
 import os
 
-DEFAULT_MODEL = os.environ.get("OE_AGENT_MODEL", "claude-sonnet-4-5")
+# The default model. Every archived scoreboard in evals/results/ was produced
+# on claude-sonnet-4-5, which Anthropic deprecated on 30 Sep 2026 and retires
+# on 30 Nov 2026 (requests to a retired model fail); its recommended
+# replacement is claude-sonnet-5-5. The archive is untouched by this default:
+# each scoreboard stamps the model it ran on, and verify_archive.py re-derives
+# the stored metrics from the archived answers whatever the default is now.
+FALLBACK_MODEL = "claude-sonnet-5-5"
+DEFAULT_MODEL = os.environ.get("OE_AGENT_MODEL", FALLBACK_MODEL)
 
 # USD per million tokens (input, output) by model-name prefix. Static and
-# possibly stale — used only for the printed pre-spend estimate.
+# possibly stale — used only for the printed pre-spend estimate. Longest
+# prefix wins, so "claude-sonnet-5" (Sonnet 5.5: $2 / $10 per
+# anthropic.com/claude/sonnet, read 2 Nov 2026) is tried before the older
+# "claude-sonnet" row that still prices the archived Sonnet 4.5 runs.
 PRICES_PER_MTOK = {
     "claude-opus": (15.0, 75.0),
+    "claude-sonnet-5": (2.0, 10.0),
     "claude-sonnet": (3.0, 15.0),
     "claude-haiku": (1.0, 5.0),
     "claude-3-5-haiku": (0.8, 4.0),

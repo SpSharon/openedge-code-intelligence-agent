@@ -409,7 +409,7 @@ python -m openedge_agent.score --all   # bm25 / embed / hybrid ablation
 python -m openedge_agent.retrieve "what calls ar-invoice.p?"   # ad-hoc query
 python -m unittest discover -s tests   # test suite (needs index/ — run the
                                        #   ingest line above once, first);
-                                       #   with numpy only: 188 run, 5 skipped
+                                       #   with numpy only: 190 run, 5 skipped
                                        #   (a skipped module counts as one)
                                        #   (the service tests — see below)
 ```
@@ -435,6 +435,16 @@ python evals/answer_score.py                    # real run; confirms cost first
 python -m openedge_agent.agent "what calls ar-invoice.p?"          # one question
 python -m openedge_agent.agent --fake "what calls ar-invoice.p?"   # offline demo
 ```
+
+**The model.** The default is `claude-sonnet-5-5` (`OE_AGENT_MODEL` overrides it; the Bedrock
+route takes `OE_BEDROCK_MODEL_ID`). Every archived scoreboard in `evals/results/` was produced on
+`claude-sonnet-4-5`, which Anthropic deprecated on 30 September 2026 and retires on 30 November
+2026 — requests to a retired model fail. The archive is untouched by the change of default: each
+scoreboard stamps the model it ran on, and the archive check above re-derives the stored metrics
+from the archived answers whatever the default is now. No scoreboard has been run on
+`claude-sonnet-5-5` yet; when one is, it is archived under its own name and reported as it comes
+out, next to the Sonnet 4.5 figures, never in place of them. The default was changed in its own
+commit, with nothing else in it, so the history shows exactly when the live path moved.
 
 Optional neural embeddings: `pip install sentence-transformers`, then re-run
 `ingest` and `score`; the backend recorded in the outputs will change from
@@ -550,7 +560,7 @@ python -m venv .venv
 .venv\Scripts\activate                       # Windows; macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt -r service/requirements.txt
 python -m openedge_agent.ingest
-OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 197 run, 1 skipped (the MCP tests, without their package); 215 with it
+OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 199 run, 1 skipped (the MCP tests, without their package); 217 with it
 OE_AGENT_BACKEND=fake python -m uvicorn service.app:app       # then open http://127.0.0.1:8000/docs
 python -m service.cli ask "what calls ar-invoice.p?"           # in a second terminal
 python -m service.pipeline evals/results --out runs.csv        # every scoreboard -> one CSV
