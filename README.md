@@ -409,7 +409,7 @@ python -m openedge_agent.score --all   # bm25 / embed / hybrid ablation
 python -m openedge_agent.retrieve "what calls ar-invoice.p?"   # ad-hoc query
 python -m unittest discover -s tests   # test suite (needs index/ — run the
                                        #   ingest line above once, first);
-                                       #   with numpy only: 190 run, 5 skipped
+                                       #   with numpy only: 223 run, 5 skipped
                                        #   (a skipped module counts as one)
                                        #   (the service tests — see below)
 ```
@@ -560,7 +560,7 @@ python -m venv .venv
 .venv\Scripts\activate                       # Windows; macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt -r service/requirements.txt
 python -m openedge_agent.ingest
-OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 199 run, 1 skipped (the MCP tests, without their package); 217 with it
+OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 232 run, 1 skipped (the MCP tests, without their package); 250 with it
 OE_AGENT_BACKEND=fake python -m uvicorn service.app:app       # then open http://127.0.0.1:8000/docs
 python -m service.cli ask "what calls ar-invoice.p?"           # in a second terminal
 python -m service.pipeline evals/results --out runs.csv        # every scoreboard -> one CSV
@@ -594,10 +594,12 @@ order. What it guarantees, and the test that proves each:
 | Observability | one JSON log line per outcome — event, receipt, attempt, the ids where the body parsed, duration where the model was called, reason where there is one — the same reason string in the log, the store and the source; counters for every outcome | the lines parse; the ids are there |
 
 The source is a protocol (`fetch`, `ack`, `nack`, `dead_letter`) — the seam where an SQS or
-Kafka client would go; none is included, and nothing here has run against either. `MemorySource`
+Kafka client goes. A Kafka one is in `consumer/kafka_source.py` (next section); there is no SQS
+client. Nothing here has run against SQS; the Kafka source has run against one local broker
+(next section). `MemorySource`
 mirrors their semantics so the worker's guarantees are tested without infrastructure;
 `FileSource` loads a JSON Lines file into it (UTF-8; a byte-order mark is tolerated). Stdlib only
-(`sqlite3`, `json`, `logging`); no new dependency. Like the service, Sharon Paul specified it under
+(`sqlite3`, `json`, `logging`); no new dependency (the Kafka source's optional package aside). Like the service, Sharon Paul specified it under
 a written brief, directed the AI coding agent that built it, and verified the result, with
 two independent fresh-context reviews whose findings were applied (configuration errors were
 being retried; the redrive counted one attempt too many; the `refused` flag missed the real
@@ -607,7 +609,7 @@ retried per event).
 
 ```
 python -m openedge_agent.ingest
-OE_AGENT_BACKEND=fake python -m unittest discover -s tests            # +35 consumer tests
+OE_AGENT_BACKEND=fake python -m unittest discover -s tests            # +35 consumer tests, +33 for the Kafka source
 python -m consumer.run --input events.jsonl --db answers.sqlite --backend fake
 ```
 
@@ -622,6 +624,87 @@ calls); a Bedrock credential failure surfaces on the first call, not at start-up
 is stored with `refused = 1` (the `fake` backend's default reply refuses every question). The test
 counts for the whole suite are under *Running it* and *The service*.
 
+### The same worker on Kafka — a consumer group, commit after the write, a dead-letter topic (optional)
+
+`consumer/kafka_source.py` puts the four calls of the source protocol onto a Kafka topic, so the
+worker, the store and the agent above run unchanged against a broker (one local broker, on 12 Nov 2026 — see
+the end of this section):
+
+| Call | On Kafka | Why |
+|---|---|---|
+| `fetch` | poll the assigned partitions — at most **one message in flight per partition** | a commit in Kafka is a position ("everything before this offset is done"), so a second message from a partition waits until the first is settled; a batch holds at most one from each partition, and the default batch size is 1 |
+| `ack` | commit `offset + 1`, synchronously — auto-commit is off | the worker acks only after the SQLite write, so a crash between the two means the message is delivered again and the store's `INSERT OR IGNORE` absorbs it |
+| `nack` with a delay | seek back to the offset and pause that partition for the delay | the retry; the other partitions keep flowing |
+| `dead_letter` | produce the original bytes to `<topic>.dlq` with the reason, source topic, partition, offset and attempts in the headers; wait for the broker's acknowledgment; then commit past the message | a dead letter that was not acknowledged is not committed past — the unsent copy is purged and the message comes back after a five-second pause |
+
+What Kafka does not give that the in-memory source (SQS's model) does, and what follows from it:
+no visibility timeout — an unacked message is simply not committed, and returns after a restart or
+a rebalance; no receive count — the attempt number lives in the process, so it starts again at 1
+after a restart; no dead-letter queue of its own — the dead-letter topic is written by this code.
+Ordering holds per partition only; the producer keys each event by its `event_id`, so two
+deliveries of one event land on one partition.
+
+```
+pip install -r consumer/requirements-kafka.txt                 # confluent-kafka; only a run against a broker needs it
+python -m unittest tests.test_kafka_source                     # 33 tests, no broker, no package: fakes with the client's method names
+docker compose -f consumer/docker-compose.kafka.yml up -d      # a single-node Kafka (KRaft) on localhost:9092
+docker exec oe-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists --topic oe.questions
+docker exec oe-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists --topic oe.questions.dlq
+python -m consumer.kafka_produce --topic oe.questions --input consumer/drills/1-mixed-batch.jsonl
+python -m consumer.kafka_run --topic oe.questions --db kafka-drill.sqlite --backend fake --idle-exit 15
+docker compose -f consumer/docker-compose.kafka.yml down -v
+```
+
+`kafka_run` checks configuration before the first poll — the package, the broker, the topic, the
+index, the model backend — and stops with exit 2 if any is missing (a consumer does not create a
+topic by subscribing to it, hence the two `--create` lines). Exit 1 if anything was dead-lettered
+or the broker failed mid-run; exit 3 only from the first drill flag below. `--idle-exit N` stops
+after N seconds without a message, counted from the moment the group has assigned this consumer
+its partitions (a stream has no end; without it the run goes on until Ctrl+C). `--group` is the
+consumer group id (default `oe-agent`); security settings go in a JSON file passed as
+`--client-config`, never on the command line. Use a database of its own for the drills
+(`kafka-drill.sqlite` above): the store is idempotent on `event_id`, so events already answered
+in another database run would all come back as duplicates.
+
+**Three drills, to run against the local broker** — a fresh topic and a fresh database; the
+event files are in `consumer/drills/`; the `--drill` flag exists only for these:
+
+| Drill | Do | Expect |
+|---|---|---|
+| 1 · A mixed batch | produce `1-mixed-batch.jsonl` (two good events, one line that is not JSON, the first event again); run with `--idle-exit 15` | `processed 2 · duplicates 1 · dead_lettered 1 · malformed 1 · committed 4`, exit 1; one message on `oe.questions.dlq` with the reason in its headers; the group's lag 0 |
+| 2 · A crash between the write and the commit | produce `2-crash-before-commit.jsonl`; run with `--drill die-before-commit` (the process exits hard after the write); run again without the flag | the first run exits with code 3; the second waits a few seconds for the dead member's session to expire, then logs `duplicate` with reason `already stored` and commits; one row for `drill-2` |
+| 3 · A transient failure | produce `3-transient-failure.jsonl`; run with `--drill fail-first-ask` | a `retry` log line naming the backoff, then, about a second later, `processed` with `"attempt": 2` |
+
+The group's position and lag, and the dead letter with its headers, from the broker's own tools:
+
+```
+docker exec oe-kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group oe-agent
+docker exec oe-kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic oe.questions.dlq --from-beginning --property print.headers=true --timeout-ms 5000
+```
+
+Known limits: the consumer does not poll while the agent is answering, so with a live model
+backend one answer longer than `max.poll.interval.ms` (five minutes by default; settable in
+`--client-config`) gets the consumer removed from the group — the commit fails, the run stops,
+the message is delivered again and the idempotent store absorbs it; a rebalance forgets a pending
+retry delay; a failed seek stops the run rather than risk a commit past an unprocessed message.
+On Windows, if the client reports connection-refused noise for `localhost`, put
+`{"broker.address.family": "v4"}` in the `--client-config` file.
+
+What it is not: a hardened Kafka deployment. One local broker, one partition by default, no security, no
+schema registry, JSON bodies only; a rebalance drops what was in flight on the revoked partitions
+(delivered again to the new owner) and that path is unit-tested, not exercised live; no MSK, no
+Confluent Cloud. The 33 tests prove the mapping against fakes with the client's method names —
+they cannot prove the real client and a real broker behave as the fakes do. That is the run
+above, and Sharon Paul did it on 12 Nov 2026 on her own machine (Windows, Python 3.14,
+confluent-kafka 2.16.1, `apache/kafka:4.0.0` in Docker), all three drills as the table says:
+drill 1 — processed 2, duplicates 1, dead-lettered 1, committed 4, lag 0, and the dead letter read
+back from `oe.questions.dlq` with its reason and source offset in the headers; drill 2 — exit 3
+after the write, then the same offset delivered again, logged `duplicate` / `already stored`,
+committed, lag 0; drill 3 — a `retry` at attempt 1, then `processed` at attempt 2 on the same
+offset. One local broker, one partition, the `fake` model backend: that is all the run shows.
+Sharon Paul specified it, directed the AI coding agent that built it, and verified it — the
+offline tests, and that run.
+
 ## Layout
 
 ```
@@ -633,7 +716,8 @@ evals/               frozen eval set + conventions + saved score reports
 openedge_agent/      the Python package (abl, ingest, retrieve, score; agent, agent3, llm)
 service/             optional FastAPI service, CLI, pipeline and fan-out over the agent
 consumer/            optional event consumer over the agent: queue semantics, idempotent store,
-                     retries with backoff, dead letters, JSON log lines (no broker client included)
+                     retries with backoff, dead letters, JSON log lines; a Kafka source
+                     (kafka_source.py, kafka_run.py, kafka_produce.py, docker-compose.kafka.yml); no SQS client
 mcp_server/          optional MCP server over the agent's tools (.mcp.json at the root registers it for Claude Code)
 camunda_step/        optional: the agent as a governed step in a Camunda 7 process — BPMN, external-task worker, runner
 tests/               stdlib unittest suite (the service and MCP tests skip without their packages)

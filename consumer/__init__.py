@@ -19,8 +19,16 @@ broker and no cloud account:
                 id, correlation id, attempt and duration
     run.py      python -m consumer.run --input events.jsonl --db answers.sqlite
 
-What it is not: a Kafka or SQS client. The EventSource protocol is the seam
-where one goes; MemorySource mirrors the semantics (visibility timeout,
-at-least-once delivery, receive-count redrive) so the worker's guarantees are
-tested here without infrastructure.
+    kafka_source.py   KafkaSource — the same four calls on a Kafka topic: a
+                consumer group, one message in flight per partition, commit
+                after the write, seek-and-pause on a retry, a dead-letter
+                topic. kafka_run.py runs the worker against a broker;
+                kafka_produce.py publishes a JSON Lines file (needs
+                consumer/requirements-kafka.txt; the tests do not)
+
+What it is not: an SQS client, or a hardened Kafka deployment. MemorySource mirrors SQS's
+semantics (visibility timeout, at-least-once delivery, receive-count redrive)
+so the worker's guarantees are tested without infrastructure; KafkaSource is
+tested against fakes with the client's method names, and was run against one
+local broker on 12 Nov 2026 (the three drills in the README).
 """

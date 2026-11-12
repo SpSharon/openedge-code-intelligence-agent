@@ -1,0 +1,4 @@
+{"event_id": "drill-1a", "question": "what calls ar-invoice.p?", "correlation_id": "req-1"}
+{"event_id": "drill-1b", "question": "which tables does oe-post.p update?"}
+this line is not JSON
+{"event_id": "drill-1a", "question": "what calls ar-invoice.p?", "correlation_id": "req-1"}
