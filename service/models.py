@@ -36,6 +36,7 @@ class HealthResponse(BaseModel):
     index_dir: str
     units: int
     problem: str | None = None  # set when status is "misconfigured"
+    key_configured: bool = False  # whether /ask can accept a key; never the key
 
 
 class StreamEvent(BaseModel):

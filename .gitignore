@@ -28,3 +28,11 @@ index/
 
 # service/pipeline output (python -m service.pipeline evals/results --out runs.csv)
 /runs.csv
+
+# deployment (deploy/): Terraform state and local inputs stay on the machine
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+terraform.tfvars
+deploy/*.local.json

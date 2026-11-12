@@ -1,7 +1,9 @@
 """Concurrent fan-out of an eval cases file against the running service.
 
     python -m service.fanout --url http://127.0.0.1:8000 \
-        --cases evals/answers_heldout.jsonl --concurrency 3
+        --cases evals/answers_heldout.jsonl --concurrency 3 [--key ...]
+
+The access key is sent as X-API-Key: from --key, else from OE_SERVICE_KEY.
 
 asyncio.gather runs one coroutine per case; an asyncio.Semaphore caps how
 many requests are in flight. gather returns results in input order, so the
@@ -16,10 +18,16 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import time
 from pathlib import Path
 
 import httpx
+
+
+def resolve_key(flag: str | None) -> str | None:
+    """--key wins; otherwise OE_SERVICE_KEY; otherwise no key."""
+    return flag or os.environ.get("OE_SERVICE_KEY") or None
 
 
 def load_cases(path: Path) -> list[dict]:
@@ -28,10 +36,12 @@ def load_cases(path: Path) -> list[dict]:
 
 
 async def ask_one(client: httpx.AsyncClient, sem: asyncio.Semaphore,
-                  case: dict) -> dict:
+                  case: dict, key: str | None = None) -> dict:
+    headers = {"X-API-Key": key} if key else {}
     async with sem:
         t0 = time.perf_counter()
-        r = await client.post("/ask", json={"question": case["question"]})
+        r = await client.post("/ask", headers=headers,
+                              json={"question": case["question"]})
         r.raise_for_status()
         body = r.json()
         return {
@@ -44,9 +54,9 @@ async def ask_one(client: httpx.AsyncClient, sem: asyncio.Semaphore,
 
 
 async def run_all(client: httpx.AsyncClient, cases: list[dict],
-                  concurrency: int) -> list[dict]:
+                  concurrency: int, key: str | None = None) -> list[dict]:
     sem = asyncio.Semaphore(concurrency)
-    results = await asyncio.gather(*(ask_one(client, sem, c) for c in cases),
+    results = await asyncio.gather(*(ask_one(client, sem, c, key) for c in cases),
                                    return_exceptions=True)
     out = []
     for case, res in zip(cases, results):
@@ -57,11 +67,12 @@ async def run_all(client: httpx.AsyncClient, cases: list[dict],
     return out
 
 
-async def main_async(url: str, cases_path: Path, concurrency: int) -> int:
+async def main_async(url: str, cases_path: Path, concurrency: int,
+                     key: str | None = None) -> int:
     cases = load_cases(cases_path)
     t0 = time.perf_counter()
     async with httpx.AsyncClient(base_url=url, timeout=300) as client:
-        results = await run_all(client, cases, concurrency)
+        results = await run_all(client, cases, concurrency, key)
     elapsed = time.perf_counter() - t0
     for res in results:
         print(json.dumps(res))
@@ -77,10 +88,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--url", default="http://127.0.0.1:8000")
     ap.add_argument("--cases", type=Path, default=Path("evals/answers_heldout.jsonl"))
     ap.add_argument("--concurrency", type=int, default=3)
+    ap.add_argument("--key", default=None,
+                    help="access key (default: the OE_SERVICE_KEY environment "
+                         "variable)")
     args = ap.parse_args(argv)
     if args.concurrency < 1:
         ap.error("--concurrency must be at least 1")
-    return asyncio.run(main_async(args.url, args.cases, args.concurrency))
+    key = resolve_key(args.key)
+    return asyncio.run(main_async(args.url, args.cases, args.concurrency, key))
 
 
 if __name__ == "__main__":

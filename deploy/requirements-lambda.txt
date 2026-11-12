@@ -1,0 +1,6 @@
+# What only the deployed image adds: boto3, for the Bedrock backend and for
+# reading the access key from SSM Parameter Store.
+# Verified on 2026-10-05: the image built with this version on the laptop
+# (Docker Desktop, linux/amd64) and passed the local checks in
+# deploy/README.md step 1. boto3 pins a compatible botocore itself.
+boto3==1.43.108

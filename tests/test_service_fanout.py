@@ -5,6 +5,7 @@ import asyncio
 import os
 import unittest
 from pathlib import Path
+from unittest import mock
 
 try:  # service deps are optional for the core suite (numpy only)
     import fastapi, httpx  # noqa: F401
@@ -22,6 +23,7 @@ from service.fanout import load_cases, run_all
 
 ROOT = Path(__file__).resolve().parent.parent
 CASES = ROOT / "evals" / "answers_heldout.jsonl"
+TEST_KEY = "test-key-0123456789abcdef"  # offline tests only; not a real key
 
 
 class ServiceFanoutTests(unittest.TestCase):
@@ -33,18 +35,13 @@ class ServiceFanoutTests(unittest.TestCase):
             transport = httpx.ASGITransport(app=app)
             async with httpx.AsyncClient(transport=transport,
                                          base_url="http://t") as client:
-                return await run_all(client, cases, concurrency=3)
+                return await run_all(client, cases, concurrency=3,
+                                     key=TEST_KEY)
 
-        saved = os.environ.get("OE_AGENT_BACKEND")
-        os.environ["OE_AGENT_BACKEND"] = "fake"
-        try:
+        with mock.patch.dict(os.environ, {"OE_AGENT_BACKEND": "fake",
+                                          "OE_SERVICE_KEY": TEST_KEY}):
             with TestClient(app):  # runs lifespan; ASGITransport does not
                 results = asyncio.run(go())
-        finally:
-            if saved is None:
-                os.environ.pop("OE_AGENT_BACKEND", None)
-            else:
-                os.environ["OE_AGENT_BACKEND"] = saved
         self.assertEqual([r["id"] for r in results], [c["id"] for c in cases])
         self.assertFalse([r for r in results if "error" in r])
 

@@ -4,6 +4,9 @@
     python -m service.cli ask "what calls ar-invoice.p?" [--k 10] [--max-steps 6] [--json]
     python -m service.cli --url http://127.0.0.1:8000 ...
 
+The access key is sent as X-API-Key: from --key, else from OE_SERVICE_KEY.
+Prefer the environment variable - a --key value is kept in shell history.
+
 A non-200 response prints `error <status>: <text>` to stderr and exits 1.
 `run(argv, client=...)` accepts any httpx.Client - tests pass FastAPI's
 TestClient, so the same code path runs in-process without a server.
@@ -13,9 +16,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 
 import httpx
+
+
+def resolve_key(flag: str | None) -> str | None:
+    """--key wins; otherwise OE_SERVICE_KEY; otherwise no key."""
+    return flag or os.environ.get("OE_SERVICE_KEY") or None
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -23,6 +32,9 @@ def build_parser() -> argparse.ArgumentParser:
                                  description="Client for the OpenEdge agent service")
     ap.add_argument("--url", default="http://127.0.0.1:8000",
                     help="service base URL (default %(default)s)")
+    ap.add_argument("--key", default=None,
+                    help="access key (default: the OE_SERVICE_KEY environment "
+                         "variable)")
     sub = ap.add_subparsers(dest="command", required=True)
     sub.add_parser("health", help="GET /health")
     p_ask = sub.add_parser("ask", help="POST /ask")
@@ -36,6 +48,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run(argv: list[str], client: httpx.Client | None = None) -> int:
     args = build_parser().parse_args(argv)
+    key = resolve_key(args.key)
+    # Per request, not on the client: an injected client gets the header too.
+    headers = {"X-API-Key": key} if key else {}
     own_client = client is None
     if own_client:
         client = httpx.Client(base_url=args.url, timeout=120)
@@ -43,9 +58,10 @@ def run(argv: list[str], client: httpx.Client | None = None) -> int:
         if args.command == "health":
             r = client.get("/health")
         else:
-            r = client.post("/ask", json={"question": args.question,
-                                          "k": args.k,
-                                          "max_steps": args.max_steps})
+            r = client.post("/ask", headers=headers,
+                            json={"question": args.question,
+                                  "k": args.k,
+                                  "max_steps": args.max_steps})
     except httpx.TransportError as exc:  # server down, DNS, timeout
         print(f"error: cannot reach {args.url}: {exc}", file=sys.stderr)
         return 1

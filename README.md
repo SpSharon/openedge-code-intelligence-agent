@@ -409,7 +409,7 @@ python -m openedge_agent.score --all   # bm25 / embed / hybrid ablation
 python -m openedge_agent.retrieve "what calls ar-invoice.p?"   # ad-hoc query
 python -m unittest discover -s tests   # test suite (needs index/ — run the
                                        #   ingest line above once, first);
-                                       #   with numpy only: 223 run, 5 skipped
+                                       #   with numpy only: 224 run, 6 skipped
                                        #   (a skipped module counts as one)
                                        #   (the service tests — see below)
 ```
@@ -551,7 +551,9 @@ verification so far.
 `POST /ask/stream` (JSON Lines: the retrieved unit ids, then the answer), plus a command-line
 client, a scoreboard-to-CSV pipeline and a concurrent fan-out over the held-out questions.
 The agent itself is unchanged — the service builds one agent per request through the same
-`make_llm()` backends. Like the rest of the repository, Sharon Paul specified it, directed
+`make_llm()` backends. `/ask` and `/ask/stream` require an access key in the `X-API-Key`
+header (401 without it, before the model is called; 503 if the service has no key configured);
+`/health` and `/docs` stay open. Like the rest of the repository, Sharon Paul specified it, directed
 the AI coding agent that built it under a written brief, and verified the result, with an
 independent review. Requires Python ≥ 3.11 (pandas 3); use a virtual environment:
 
@@ -560,19 +562,35 @@ python -m venv .venv
 .venv\Scripts\activate                       # Windows; macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt -r service/requirements.txt
 python -m openedge_agent.ingest
-OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 232 run, 1 skipped (the MCP tests, without their package); 250 with it
-OE_AGENT_BACKEND=fake python -m uvicorn service.app:app       # then open http://127.0.0.1:8000/docs
-python -m service.cli ask "what calls ar-invoice.p?"           # in a second terminal
+OE_AGENT_BACKEND=fake python -m unittest discover -s tests    # 245 run, 1 skipped (the MCP tests, without their package); 263 with it
+OE_SERVICE_KEY=local-test-key-0123456789 OE_AGENT_BACKEND=fake python -m uvicorn service.app:app   # then open http://127.0.0.1:8000/docs
+python -m service.cli ask "what calls ar-invoice.p?"           # in a second terminal, with the same OE_SERVICE_KEY set
 python -m service.pipeline evals/results --out runs.csv        # every scoreboard -> one CSV
-python -m service.fanout --url http://127.0.0.1:8000 --cases evals/answers_heldout.jsonl --concurrency 3
+python -m service.fanout --url http://127.0.0.1:8000 --cases evals/answers_heldout.jsonl --concurrency 3   # with the same OE_SERVICE_KEY set
 ```
 
-(On PowerShell, set the backend with `$env:OE_AGENT_BACKEND = "fake"` first.) The `fake`
-backend answers offline with no key; `anthropic` and `bedrock` work as in the sections above.
+(On PowerShell, set them first: `$env:OE_AGENT_BACKEND = "fake"` and
+`$env:OE_SERVICE_KEY = "local-test-key-0123456789"` — any value of 16 characters or more; a local
+test value, not a secret.) The `fake`
+backend answers offline with no model API key; `anthropic` and `bedrock` work as in the sections above.
 Errors are reported honestly: 422 for a bad request, 503 for a configuration problem (unknown
-backend, missing key or credentials), 500 for anything else. Known limits: an error from the
-live model API returns 500; a failure after streaming has started shows as a truncated 200;
-nothing here is deployed — it runs locally.
+backend, missing service key, model API key or credentials), 500 for anything else. Known limits: an error from the
+live model API returns 500; a failure after streaming has started shows as a truncated 200.
+
+**On AWS Lambda — deployed once, then torn down (12 Nov 2026).** `deploy/` holds a container
+image for Lambda (the service unchanged, behind the AWS Lambda Web Adapter), Terraform for the
+function, its Function URL, a least-privilege role, a log group and a budget alarm, and the
+policy of a separate deploying user; the access key lives in the SSM Parameter Store and is
+never in the code, the Terraform files or the Terraform state. Sharon Paul ran the deployment
+and teardown steps of [`deploy/README.md`](deploy/README.md) on her own AWS account that day: `health`
+answered from Lambda, a wrong key got 401, Amazon Bedrock refused the first two models for
+account reasons read from the function's log (Claude Sonnet 4.5: Legacy and unused for 30
+days; Sonnet 5.5: not available for the account), the third (Sonnet 4.6) answered one question
+with two citations, the cold start measured by AWS was about two seconds, and `terraform
+destroy` removed all ten resources. One deployment, three questions asked and one answered,
+about twenty minutes of life: no load, no streaming call on Lambda, nothing left running — the run record at the end of that
+file has the detail and the limits. Sharon Paul specified it, directed the AI coding agent
+that built it, and verified it — the tests, and that run.
 
 ### The event consumer — queue in, answers out, with the guarantees an integration worker needs (optional)
 
@@ -715,6 +733,7 @@ evals/               frozen eval set + conventions + saved score reports
                      (the answer key lives here, never under corpus/)
 openedge_agent/      the Python package (abl, ingest, retrieve, score; agent, agent3, llm)
 service/             optional FastAPI service, CLI, pipeline and fan-out over the agent
+deploy/              optional: the service as a container on AWS Lambda — Dockerfile, Terraform, the deploying user's policy, the run record
 consumer/            optional event consumer over the agent: queue semantics, idempotent store,
                      retries with backoff, dead letters, JSON log lines; a Kafka source
                      (kafka_source.py, kafka_run.py, kafka_produce.py, docker-compose.kafka.yml); no SQS client
