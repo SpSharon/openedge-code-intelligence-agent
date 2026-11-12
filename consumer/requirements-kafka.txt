@@ -1,0 +1,6 @@
+# What the Kafka source (consumer/kafka_source.py, kafka_run.py, kafka_produce.py) adds on top
+# of the repository's requirements.txt. Confluent's Python client (librdkafka underneath).
+# 2.16.1 is the version checked to have a Windows wheel for Python 3.14 (pip --dry-run, 12 Nov 2026);
+# if pip tries to build from source, stop and use: pip install --only-binary=:all: -r consumer/requirements-kafka.txt
+# The unit tests do not need it — they inject fakes; only a run against a broker does.
+confluent-kafka>=2.16,<3

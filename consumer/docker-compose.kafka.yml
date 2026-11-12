@@ -1,0 +1,11 @@
+# A single-node Kafka for the drills in the README — KRaft mode, no ZooKeeper, no security,
+# nothing kept between runs. As run by this repository's owner on
+# 12 Nov 2026: its default configuration listens on 9092 and advertises localhost:9092, so a client on this machine connects with --bootstrap localhost:9092.
+#   docker compose -f consumer/docker-compose.kafka.yml up -d
+#   docker compose -f consumer/docker-compose.kafka.yml down -v
+services:
+  kafka:
+    image: apache/kafka:4.0.0
+    container_name: oe-kafka
+    ports:
+      - "9092:9092"
