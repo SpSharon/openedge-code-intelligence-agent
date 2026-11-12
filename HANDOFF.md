@@ -119,3 +119,28 @@ larger than 9; a real neural encoder (the embed leg is LSA today).
 
 Synthetic corpus only. Honest framing. Frozen sets never move. Nothing
 pushed — Sharon reviews and commits from PowerShell.
+
+## After Stage 3 — what the tree holds since (added 2 Nov 2026)
+
+The sections above are the Stage 2 / Stage 3 handoff as written on 2026-07-26 and are kept as
+history: their test counts (72, 98) are of that date. Since then, each item below arrived as
+its own pull request, specified and verified by Sharon Paul and implemented by Claude Code
+under her brief; the README section named is the current description and carries the counts.
+
+- **Amazon Bedrock route** (18 Sep 2026) — `BedrockLLM` in `llm.py`, three archived held-out
+  runs; README "Running on Amazon Bedrock".
+- **FastAPI service** (PR #1–#3, 3 Oct 2026) — `service/`; README "The service".
+- **Verify on every push** (PR #4, 26 Oct 2026) — `.github/workflows/verify.yml` and
+  `evals/verify_archive.py`; README "Verified on every push".
+- **Event consumer** (PR #5, 26 Oct 2026) — `consumer/`; README "The event consumer".
+- **MCP server** (PR #6, 26 Oct 2026; verified inside Claude Code the same day, PR #8) —
+  `mcp_server/` and `.mcp.json`; README "The MCP server".
+- **The governed step in Camunda 7** (PR #7, 26 Oct 2026) — `camunda_step/`; README "The
+  governed step"; the live run against a local engine is the owner's check and is recorded in
+  the README when done.
+
+The suite at HEAD is the README's count under *Running it* / *The service*. The "Open next
+steps" above are still open: `search` has not been forced on the retrieval-gap cases, the
+held-out set is still nine, the embedding leg is still LSA. The working rule is unchanged —
+nothing is pushed by the coding agent; every change is applied, tested, committed and pushed
+by Sharon Paul from her own machine.

@@ -1,8 +1,9 @@
-# Stage 1 dependencies.
+# Core dependencies (every offline path: ingest, retrieval, tests, --rescore, verify_archive).
 # Policy: a version is pinned here only after it was installed and exercised
 # in the build environment ("verify against real runs").
 #
-# Verified in-environment (Python 3.11):
+# Verified in-environment (Python 3.11); NumPy 2.4 supports Python 3.11-3.14, which
+# sets the repository's Python floor:
 numpy==2.4.4
 
 # NOTE: the Stage 1 build environment could not reach PyPI (HTTP 403), so
@@ -13,7 +14,8 @@ numpy==2.4.4
 # Stage 2: real answer generation (the only external API dependency).
 # Not pinned: could not be installed/exercised in the Stage 2 build
 # environment either (same PyPI 403) — install on a normal-network machine:
-#   pip install anthropic
+#   pip install anthropic          # the Anthropic API route
+#   pip install boto3              # the Bedrock route (OE_AGENT_BACKEND=bedrock)
 # Offline paths (tests, --dry-run, --fake) need only numpy.
 
 # Optional upgrade on a machine with normal network access:
