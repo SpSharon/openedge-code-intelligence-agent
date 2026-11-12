@@ -5,6 +5,7 @@ import io
 import os
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from unittest import mock
 
 try:  # service deps are optional for the core suite (numpy only)
     import fastapi, httpx  # noqa: F401
@@ -20,23 +21,23 @@ from service.app import app
 from service.cli import run
 
 QUESTION = "what calls ar-invoice.p?"
+TEST_KEY = "test-key-0123456789abcdef"  # offline tests only; not a real key
 
 
 class ServiceCliTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls._saved_backend = os.environ.get("OE_AGENT_BACKEND")
-        os.environ["OE_AGENT_BACKEND"] = "fake"
+        # The CLI reads OE_SERVICE_KEY when --key is not given.
+        cls._env = mock.patch.dict(os.environ, {"OE_AGENT_BACKEND": "fake",
+                                                "OE_SERVICE_KEY": TEST_KEY})
+        cls._env.start()
         cls.client = TestClient(app)
         cls.client.__enter__()
 
     @classmethod
     def tearDownClass(cls):
         cls.client.__exit__(None, None, None)
-        if cls._saved_backend is None:
-            os.environ.pop("OE_AGENT_BACKEND", None)
-        else:
-            os.environ["OE_AGENT_BACKEND"] = cls._saved_backend
+        cls._env.stop()
 
     def test_health_prints_status(self):
         out = io.StringIO()

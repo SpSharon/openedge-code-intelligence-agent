@@ -1,0 +1,11 @@
+# Allow-list: only what the image needs reaches the build. Nothing else -
+# .env files, Terraform state, .venv, .git, the local index, notes - can
+# leak into the image.
+*
+!requirements.txt
+!openedge_agent/
+!corpus/
+!service/
+!deploy/requirements-lambda.txt
+**/__pycache__
+**/*.pyc

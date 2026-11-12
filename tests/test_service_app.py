@@ -23,6 +23,7 @@ import service.app as service_app
 from service.app import app, settings
 
 QUESTION = "what calls ar-invoice.p?"
+TEST_KEY = "test-key-0123456789abcdef"  # offline tests only; not a real key
 ASK_KEYS = {"answer", "citations", "invalid_citations", "retrieved",
             "steps", "backend", "usage"}
 
@@ -31,18 +32,16 @@ class ServiceAppTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Configure, then start: lifespan reads the backend at start-up.
-        cls._saved_backend = os.environ.get("OE_AGENT_BACKEND")
-        os.environ["OE_AGENT_BACKEND"] = "fake"
-        cls.client = TestClient(app)
+        cls._env = mock.patch.dict(os.environ, {"OE_AGENT_BACKEND": "fake",
+                                                "OE_SERVICE_KEY": TEST_KEY})
+        cls._env.start()
+        cls.client = TestClient(app, headers={"X-API-Key": TEST_KEY})
         cls.client.__enter__()
 
     @classmethod
     def tearDownClass(cls):
         cls.client.__exit__(None, None, None)
-        if cls._saved_backend is None:
-            os.environ.pop("OE_AGENT_BACKEND", None)
-        else:
-            os.environ["OE_AGENT_BACKEND"] = cls._saved_backend
+        cls._env.stop()
 
     def test_health(self):
         r = self.client.get("/health")
@@ -129,7 +128,8 @@ class ServiceAppTests(unittest.TestCase):
             if saved_key is not None:
                 os.environ["ANTHROPIC_API_KEY"] = saved_key
         # No `with`: lifespan already ran for the class client; close() below.
-        raw = TestClient(app, raise_server_exceptions=False)
+        raw = TestClient(app, raise_server_exceptions=False,
+                         headers={"X-API-Key": TEST_KEY})
         try:
             with self.subTest("a bug inside the agent stays a 500"):
                 # Even a RuntimeError raised by ask() is not relabelled as 503.
@@ -144,8 +144,9 @@ class ServiceAppTests(unittest.TestCase):
                 async def partial_stream():
                     transport = httpx.ASGITransport(app=app,
                                                    raise_app_exceptions=False)
-                    async with httpx.AsyncClient(transport=transport,
-                                                 base_url="http://t") as c:
+                    async with httpx.AsyncClient(
+                            transport=transport, base_url="http://t",
+                            headers={"X-API-Key": TEST_KEY}) as c:
                         return await c.post("/ask/stream",
                                             json={"question": QUESTION})
 

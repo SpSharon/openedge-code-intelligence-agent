@@ -39,16 +39,39 @@ a failure.
 diagnostic check). It reports status "ok", or "misconfigured" with the
 reason in `problem` when OE_AGENT_BACKEND is not one of the backends
 openedge_agent.llm knows; /ask then answers 503 with the same reason.
+
+Access key (added for the AWS deployment, brief 2026-10-04):
+    /ask and /ask/stream require the header X-API-Key. The expected key is
+    read once, in lifespan, from OE_SERVICE_KEY - or, when that is unset,
+    from the SSM Parameter Store SecureString named by
+    OE_SERVICE_KEY_SSM_PARAM (the Lambda deployment). A rotated key takes
+    effect at the next cold start.
+    401  missing or wrong X-API-Key - checked before the body is validated
+         and before any agent is built, so an unauthenticated caller never
+         reaches the model
+    503  no usable key configured (unset, shorter than 16 characters, or
+         the SSM read failed): the service refuses rather than running open.
+         A failed SSM read is retried on a later request (at most every
+         30 seconds), so one transient failure does not leave a Lambda
+         instance refusing for its whole lifetime.
+    /health and /docs stay open; /health reports only whether a key is
+    configured, never the key. The comparison is constant-time.
+    Known limit: a request whose body is not valid JSON at all gets 422
+    even without a key - FastAPI parses JSON before any dependency runs.
+    No agent is built and no model is called, so nothing is exposed.
 """
 
 from __future__ import annotations
 
+import hmac
 import os
+import time
 from collections.abc import Iterable
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Security
+from fastapi.security import APIKeyHeader
 
 from openedge_agent.agent3 import ToolAgent
 from openedge_agent.llm import BACKENDS, BedrockLLM, make_llm
@@ -58,6 +81,38 @@ from .models import AskRequest, AskResponse, HealthResponse, StreamEvent
 
 # Filled once by lifespan; read by every request.
 settings: dict = {}
+
+MIN_KEY_LENGTH = 16
+SSM_RETRY_SECONDS = 30
+
+
+def _load_service_key() -> tuple[str | None, str | None]:
+    """(key, None) or (None, reason). Never raises; never logs the key."""
+    key = (os.environ.get("OE_SERVICE_KEY") or "").strip()
+    source = "OE_SERVICE_KEY"
+    if not key:
+        param = (os.environ.get("OE_SERVICE_KEY_SSM_PARAM") or "").strip()
+        if not param:
+            return None, ("service key not configured (set OE_SERVICE_KEY, "
+                          "or OE_SERVICE_KEY_SSM_PARAM on AWS)")
+        source = f"SSM parameter {param!r}"
+        try:
+            import boto3  # lazy: only the deployed image needs it
+            from botocore.exceptions import BotoCoreError, ClientError
+        except ImportError as exc:
+            return None, f"service key: cannot read {source}: {exc}"
+        try:
+            key = boto3.client("ssm").get_parameter(
+                Name=param, WithDecryption=True
+            )["Parameter"]["Value"].strip()
+        except (BotoCoreError, ClientError) as exc:
+            # The class name only: enough to diagnose, nothing secret.
+            return None, (f"service key: cannot read {source} "
+                          f"({type(exc).__name__})")
+    if len(key) < MIN_KEY_LENGTH:
+        return None, (f"service key from {source} is shorter than "
+                      f"{MIN_KEY_LENGTH} characters")
+    return key, None
 
 
 @asynccontextmanager
@@ -75,6 +130,8 @@ async def lifespan(app: FastAPI):
         None if settings["backend"] in BACKENDS
         else f"unknown backend {settings['backend']!r}; expected one of {BACKENDS}"
     )
+    settings["service_key"], settings["key_problem"] = _load_service_key()
+    settings["key_loaded_at"] = time.monotonic()
     # Retriever.units includes the schema units: 35 on this corpus.
     settings["units"] = len(Retriever(index_dir=index_dir).units)
     yield
@@ -82,6 +139,46 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="OpenEdge code-intelligence service", lifespan=lifespan)
+
+# auto_error=False: a missing header reaches require_key, which answers
+# 503 (no key configured) or 401 itself. Declaring it with Security() puts
+# the scheme in the OpenAPI document - the Authorize button in /docs.
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False,
+                              description="The service access key")
+
+# Listed in the OpenAPI document so /docs shows them as expected answers.
+KEY_RESPONSES = {
+    401: {"description": "Missing or invalid X-API-Key"},
+    503: {"description": "Not configured: no service key, or the backend "
+                         "is misconfigured"},
+}
+
+
+def _retry_key_load() -> None:
+    """Only for the SSM source, and only after a failure: try again, at most
+    every SSM_RETRY_SECONDS. Still fail-closed until a read succeeds."""
+    if settings.get("service_key") is not None:
+        return
+    if not os.environ.get("OE_SERVICE_KEY_SSM_PARAM"):
+        return
+    now = time.monotonic()
+    if now - settings.get("key_loaded_at", 0.0) < SSM_RETRY_SECONDS:
+        return
+    settings["key_loaded_at"] = now
+    settings["service_key"], settings["key_problem"] = _load_service_key()
+
+
+def require_key(supplied: str | None = Security(api_key_header)) -> None:
+    _retry_key_load()
+    expected = settings.get("service_key")
+    if expected is None:
+        raise HTTPException(status_code=503, detail=settings.get(
+            "key_problem") or "service key not configured")
+    if supplied is None or not hmac.compare_digest(
+        supplied.encode("utf-8"), expected.encode("utf-8")
+    ):
+        raise HTTPException(status_code=401,
+                            detail="missing or invalid X-API-Key")
 
 
 def _check_aws_credentials() -> None:
@@ -151,10 +248,14 @@ def health() -> HealthResponse:
         index_dir=str(settings["index_dir"]),
         units=settings["units"],
         problem=problem,
+        key_configured=settings.get("service_key") is not None,
     )
 
 
-@app.post("/ask", response_model=AskResponse)
+# require_key is listed in the route's dependencies, so it runs before
+# ask_job: no key, no body validation, no agent.
+@app.post("/ask", response_model=AskResponse,
+          dependencies=[Depends(require_key)], responses=KEY_RESPONSES)
 def ask(job: tuple[AskRequest, ToolAgent] = Depends(ask_job)) -> AskResponse:
     req, agent = job
     # Plain def: agent.ask() blocks on the model, so FastAPI runs this in
@@ -171,7 +272,8 @@ def ask(job: tuple[AskRequest, ToolAgent] = Depends(ask_job)) -> AskResponse:
     )
 
 
-@app.post("/ask/stream")
+@app.post("/ask/stream", dependencies=[Depends(require_key)],
+          responses=KEY_RESPONSES)
 def ask_stream(
     job: tuple[AskRequest, ToolAgent] = Depends(ask_job),
 ) -> Iterable[StreamEvent]:
