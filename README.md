@@ -723,6 +723,18 @@ offset. One local broker, one partition, the `fake` model backend: that is all t
 Sharon Paul specified it, directed the AI coding agent that built it, and verified it — the
 offline tests, and that run.
 
+**The Kafka side a second time, in Java.** [`consumer/java/`](consumer/java/README.md) holds two
+Java classes (about 530 lines with their comments, one Maven build) that read the same topic with
+the same guarantees — commit after the write, an idempotent store, bounded retries by seek and
+pause, a dead-letter topic written by the client — and run the same three drill files. It is
+there to be read beside the Python source; it stores the question and does not call the agent,
+and it has no unit tests of its own. An AI coding agent wrote it to Sharon Paul's specification
+and under her direction; she compiled it with Maven and ran the three drills herself, against a
+local broker from the same compose file, on 17 Nov 2026 (the record is in that README): the same
+per-drill counts and log outcomes as the Python run of 12 Nov 2026, with two stated differences —
+its third drill fails the first database write, not a model call, and it stores the question
+where the Python worker stores an answer. One local broker, one partition, each drill once.
+
 ## Layout
 
 ```
@@ -736,7 +748,8 @@ service/             optional FastAPI service, CLI, pipeline and fan-out over th
 deploy/              optional: the service as a container on AWS Lambda — Dockerfile, Terraform, the deploying user's policy, the run record
 consumer/            optional event consumer over the agent: queue semantics, idempotent store,
                      retries with backoff, dead letters, JSON log lines; a Kafka source
-                     (kafka_source.py, kafka_run.py, kafka_produce.py, docker-compose.kafka.yml); no SQS client
+                     (kafka_source.py, kafka_run.py, kafka_produce.py, docker-compose.kafka.yml); no SQS client;
+                     java/ — the Kafka side again as a small Java program (Maven), for reading
 mcp_server/          optional MCP server over the agent's tools (.mcp.json at the root registers it for Claude Code)
 camunda_step/        optional: the agent as a governed step in a Camunda 7 process — BPMN, external-task worker, runner
 tests/               stdlib unittest suite (the service and MCP tests skip without their packages)

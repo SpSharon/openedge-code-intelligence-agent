@@ -36,3 +36,6 @@ index/
 crash.log
 terraform.tfvars
 deploy/*.local.json
+
+# The Java consumer (consumer/java): Maven build output
+consumer/java/target/
